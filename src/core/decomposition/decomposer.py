@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from .config import DecomposerConfig, QueryType
+from src.config import DecomposerConfig, QueryType
 from .classifier import QueryComplexityClassifier, ClassificationResult
 
 # Setup logging

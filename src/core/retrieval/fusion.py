@@ -8,7 +8,7 @@ from typing import List, Dict
 from dataclasses import dataclass
 from enum import Enum
 
-from .config import FusionConfig
+from src.config import FusionConfig
 from .parallel import RetrievedDocument
 
 

@@ -14,7 +14,7 @@ import numpy as np
 from typing import List, Tuple, Dict, Optional
 from sentence_transformers import SentenceTransformer
 
-from .config import RouterConfig, DEFAULT_CONFIG
+from src.config import RouterConfig, DEFAULT_CONFIG
 from .routes import ROUTES, Route
 
 

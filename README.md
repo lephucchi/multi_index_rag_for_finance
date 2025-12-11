@@ -43,7 +43,7 @@ A production-ready **Multi-Index RAG (Retrieval-Augmented Generation)** system d
 > Intelligent query classification to route questions to the right knowledge base
 
 ```python
-from src.semantic_router import HybridRouter
+from src.core.router import HybridRouter
 
 router = HybridRouter()
 routes, scores = router.route("ROE là gì và VNM có ROE bao nhiêu")
@@ -144,8 +144,8 @@ openai_api_key=your-key  # or GEMINI_API_KEY
 ### Run
 
 ```bash
-# Test semantic router
-python -m src.semantic_router.test_router
+# Test pipeline (requires langgraph)
+python -c "from src.pipeline import run_rag_pipeline; print(run_rag_pipeline('ROE là gì'))"
 
 # Start API server
 uvicorn src.api.main:app --reload --port 8000
@@ -161,20 +161,26 @@ open http://localhost:8000/docs
 ```
 multi_index_rag_for_finance/
 ├── 📂 src/
-│   ├── 📂 semantic_router/     # ✅ Query routing module
-│   │   ├── router.py           # HybridRouter implementation
-│   │   ├── routes.py           # Route definitions
-│   │   ├── retriever.py        # Supabase integration
-│   │   └── evaluation.py       # Test dataset & metrics
-│   ├── 📂 query_decomposition/ # 🔄 Coming soon
-│   ├── 📂 retrieval/           # 🔄 Coming soon
-│   ├── 📂 generator/           # 📋 Planned
-│   ├── 📂 pipeline/            # 📋 LangGraph definition
-│   └── 📂 api/                 # 📋 FastAPI endpoints
-├── 📂 docs/                    # Documentation (system.md, outline.md, plan.md)
-├── 📂 data/
-│   ├── 📂 processed/           # Cleaned datasets
-│   └── 📂 raw/                 # Original data
+│   ├── 📂 config/              # ✅ Centralized configuration
+│   │   ├── router_config.py
+│   │   ├── decomposition_config.py
+│   │   └── retrieval_config.py
+│   ├── 📂 core/                # ✅ Business logic
+│   │   ├── 📂 router/          # ✅ HybridRouter (100% accuracy)
+│   │   ├── 📂 decomposition/   # ✅ QueryDecomposer + Classifier
+│   │   ├── 📂 retrieval/       # ✅ ParallelRetriever + Fusion
+│   │   └── 📂 generator/       # 📋 Step 5
+│   ├── 📂 pipeline/            # ✅ LangGraph orchestration
+│   │   ├── state.py            # RAGState TypedDict
+│   │   ├── nodes.py            # Node functions
+│   │   └── graph.py            # StateGraph definition
+│   ├── 📂 api/                 # 📋 FastAPI (Step 5)
+│   └── 📂 utils/               # Shared utilities
+├── 📂 tests/                   # Test suites
+│   └── evaluation/
+├── 📂 docs/
+│   ├── plan/                   # Implementation plans
+│   └── dev_journey/            # Development notes
 ├── 📄 requirements.txt
 ├── 📄 .env.example
 └── 📄 README.md
@@ -198,8 +204,8 @@ multi_index_rag_for_finance/
 - [x] **Step 1**: Data Collection & Preprocessing
 - [x] **Step 2**: Embedding & Vector Index Construction
 - [x] **Step 3**: Semantic Router Implementation (100% accuracy ✅)
-- [ ] **Step 4**: Query Decomposition & Parallel Retrieval
-- [ ] **Step 5**: Grounded Generation with Citations
+- [x] **Step 4**: Query Decomposition & Parallel Retrieval ✅
+- [ ] **Step 5**: Grounded Generation & LangGraph (In Progress)
 - [ ] **Step 6**: MVP Development (API + Frontend)
 - [ ] **Step 7**: Evaluation & Deployment
 

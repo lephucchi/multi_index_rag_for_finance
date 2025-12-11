@@ -12,7 +12,7 @@ import logging
 from typing import List, Dict, Optional, Tuple, Protocol
 from dataclasses import dataclass, field
 
-from .config import RetrieverConfig, get_table_name
+from src.config import RetrieverConfig, INDEX_TABLE_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +214,7 @@ class ParallelRetriever:
             return []
         
         k = k or self.config.k_per_index
-        table = get_table_name(index)
+        table = INDEX_TABLE_MAP.get(index, f"{index}_index")
         
         try:
             embedding = self.encoder.encode(query)

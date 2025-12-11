@@ -8,7 +8,7 @@ import re
 from typing import Tuple
 from dataclasses import dataclass
 
-from .config import ClassifierConfig
+from src.config import ClassifierConfig
 
 
 @dataclass

@@ -1,17 +1,32 @@
 """
-Pipeline Module
+Pipeline Module - LangGraph RAG Orchestration.
 
-Provides the unified RAG pipeline integrating all components.
+Provides the unified RAG pipeline integrating all components via LangGraph.
+
+Components:
+- RAGState: Pipeline state schema
+- Nodes: route, decompose, retrieve, generate
+- Graph: StateGraph with conditional edges
 
 Example:
-    >>> from src.pipeline import RAGPipeline, create_pipeline
-    >>> pipeline = create_pipeline()
-    >>> result = pipeline.process("ROE là gì và VNM có ROE bao nhiêu")
+    >>> from src.pipeline import run_rag_pipeline
+    >>> result = run_rag_pipeline("ROE là gì và VNM có ROE bao nhiêu")
+    >>> print(result["answer"])
 """
-from .rag_pipeline import RAGPipeline, PipelineResult, create_pipeline
+from .state import RAGState, create_initial_state
+from .nodes import route_node, decompose_node, retrieve_node
+from .graph import build_rag_graph, get_rag_graph, run_rag_pipeline
 
 __all__ = [
-    "RAGPipeline",
-    "PipelineResult",
-    "create_pipeline",
+    # State
+    "RAGState",
+    "create_initial_state",
+    # Nodes
+    "route_node",
+    "decompose_node",
+    "retrieve_node",
+    # Graph
+    "build_rag_graph",
+    "get_rag_graph",
+    "run_rag_pipeline",
 ]
