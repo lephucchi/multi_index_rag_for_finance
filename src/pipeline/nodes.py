@@ -16,6 +16,7 @@ _router = None
 _decomposer = None
 _retriever = None
 _fusion = None
+_generator = None
 
 
 def _get_router():
@@ -48,6 +49,14 @@ def _get_fusion():
         from src.core.retrieval import ResultFusion
         _fusion = ResultFusion()
     return _fusion
+
+
+def _get_generator():
+    global _generator
+    if _generator is None:
+        from src.core.generator import GroundedGenerator
+        _generator = GroundedGenerator()
+    return _generator
 
 
 def route_node(state: RAGState) -> RAGState:
@@ -118,9 +127,36 @@ def retrieve_node(state: RAGState) -> RAGState:
     return state
 
 
+def generate_node(state: RAGState) -> RAGState:
+    """Generate grounded answer with citations."""
+    generator = _get_generator()
+    start = time.time()
+    
+    result = generator.generate(
+        query=state["query"],
+        context=state["formatted_context"],
+        citations_map=state["citations_map"]
+    )
+    
+    state["answer"] = result.answer
+    state["citations"] = [
+        {"number": n, "used": True}
+        for n in result.citations_used
+    ]
+    state["is_grounded"] = result.is_grounded
+    state["step_times"]["generate"] = (time.time() - start) * 1000
+    
+    # Calculate total time
+    state["total_time_ms"] = sum(state["step_times"].values())
+    
+    logger.info(f"Generated answer with {len(result.citations_used)} citations, grounded={result.is_grounded}")
+    return state
+
+
 def should_decompose(state: RAGState) -> bool:
     """Determine if query needs decomposition."""
     from src.core.decomposition import QueryComplexityClassifier
     classifier = QueryComplexityClassifier()
     result = classifier.classify(state["query"])
     return result.is_complex
+

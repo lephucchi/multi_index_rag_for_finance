@@ -14,7 +14,7 @@ Example:
     >>> print(result["answer"])
 """
 from .state import RAGState, create_initial_state
-from .nodes import route_node, decompose_node, retrieve_node
+from .nodes import route_node, decompose_node, retrieve_node, generate_node
 from .graph import build_rag_graph, get_rag_graph, run_rag_pipeline
 
 __all__ = [
@@ -25,6 +25,7 @@ __all__ = [
     "route_node",
     "decompose_node",
     "retrieve_node",
+    "generate_node",
     # Graph
     "build_rag_graph",
     "get_rag_graph",
