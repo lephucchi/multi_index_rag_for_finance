@@ -205,9 +205,10 @@ multi_index_rag_for_finance/
 - [x] **Step 2**: Embedding & Vector Index Construction
 - [x] **Step 3**: Semantic Router Implementation (100% accuracy ✅)
 - [x] **Step 4**: Query Decomposition & Parallel Retrieval ✅
-- [ ] **Step 5**: Grounded Generation & LangGraph (In Progress)
-- [ ] **Step 6**: MVP Development (API + Frontend)
-- [ ] **Step 7**: Evaluation & Deployment
+- [x] **Step 5**: Grounded Generation & LangGraph ✅
+- [x] **Step 6**: FastAPI Backend ✅
+- [ ] **Step 7**: Frontend Development
+- [ ] **Step 8**: Evaluation & Deployment
 
 ---
 

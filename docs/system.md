@@ -350,34 +350,29 @@ class QueryResponse(BaseModel):
 ```
 multi_index_rag_for_finance/
 ├── src/
-│   ├── semantic_router/      # ✅ Implemented
-│   │   ├── router.py
-│   │   ├── routes.py
-│   │   ├── config.py
-│   │   ├── retriever.py
-│   │   └── evaluation.py
-│   ├── query_decomposition/  # 🔄 Step 4
-│   │   ├── decomposer.py
-│   │   └── prompts.py
-│   ├── retrieval/            # 🔄 Step 4
-│   │   ├── parallel.py
-│   │   └── fusion.py
-│   ├── generator/            # 📋 Step 5
-│   │   ├── grounded.py
-│   │   └── citation.py
-│   ├── pipeline/             # 📋 Step 5
-│   │   ├── graph.py          # LangGraph definition
-│   │   └── state.py
-│   └── api/                  # 📋 Step 5
-│       ├── main.py
-│       └── routes.py
-├── docs/                     # Documentation
-├── data/
-│   ├── processed/
-│   └── raw/
-├── models/
-├── notebooks/
+│   ├── config/               # ✅ Centralized configuration
+│   │   ├── router_config.py
+│   │   ├── decomposition_config.py
+│   │   └── retrieval_config.py
+│   ├── core/
+│   │   ├── router/           # ✅ Implemented - HybridRouter
+│   │   ├── decomposition/    # ✅ Implemented - QueryDecomposer
+│   │   ├── retrieval/        # ✅ Implemented - ParallelRetriever
+│   │   └── generator/        # ✅ Implemented - GroundedGenerator
+│   ├── pipeline/             # ✅ Implemented - LangGraph
+│   │   ├── state.py          # RAGState TypedDict
+│   │   ├── nodes.py          # Node functions
+│   │   └── graph.py          # StateGraph definition
+│   ├── api/                  # ✅ Implemented - FastAPI
+│   │   ├── main.py           # FastAPI app
+│   │   ├── schemas/          # Pydantic models
+│   │   └── routes/           # Endpoints
+│   └── utils/                # Shared utilities
 ├── tests/
+│   └── test_api.py           # API tests
+├── docs/
+│   ├── plan/                 # Implementation plans
+│   └── dev_journey/          # Development notes
 └── requirements.txt
 ```
 
