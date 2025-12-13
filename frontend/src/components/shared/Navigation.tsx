@@ -31,37 +31,74 @@ export function Navigation() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        transition: 'all 0.3s',
         background: 'var(--glass-bg)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--border)',
       }}
     >
-      <nav className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <nav style={{ width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '4rem' }}>
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Link 
+            href="/" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem',
+              textDecoration: 'none',
+              transition: 'opacity 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' }}
+              style={{ 
+                width: '2.25rem', 
+                height: '2.25rem', 
+                borderRadius: '0.5rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' 
+              }}
             >
-              <span className="text-white font-bold text-sm">MR</span>
+              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.875rem' }}>MR</span>
             </div>
-            <span className="font-semibold text-lg hidden sm:block" style={{ color: 'var(--text-primary)' }}>
+            <span 
+              style={{ 
+                fontWeight: 600, 
+                fontSize: '1.125rem', 
+                color: 'var(--text-primary)',
+                display: window.innerWidth >= 640 ? 'block' : 'none'
+              }}
+            >
               Multi-RAG
             </span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div style={{ display: window.innerWidth >= 768 ? 'flex' : 'none', alignItems: 'center', gap: '2rem' }}>
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium transition-colors hover:opacity-80"
-                style={{ color: 'var(--text-secondary)' }}
+                style={{ 
+                  fontSize: '0.875rem', 
+                  fontWeight: 500, 
+                  color: 'var(--text-secondary)',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
               >
                 {item.label}
               </Link>
@@ -69,12 +106,24 @@ export function Navigation() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-105"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              style={{ 
+                width: '2.5rem', 
+                height: '2.5rem', 
+                borderRadius: '0.5rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                background: 'var(--surface)', 
+                border: '1px solid var(--border)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               aria-label="Toggle theme"
             >
               {theme === 'light' ? (
@@ -87,16 +136,42 @@ export function Navigation() {
             {/* CTA Button - Desktop */}
             <Link
               href="/chat"
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white transition-all hover:scale-105"
-              style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', boxShadow: 'var(--shadow-md)' }}
+              style={{ 
+                display: window.innerWidth >= 640 ? 'flex' : 'none',
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                padding: '0.625rem 1.25rem', 
+                borderRadius: '0.5rem', 
+                fontSize: '0.875rem', 
+                fontWeight: 500, 
+                color: 'white',
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', 
+                boxShadow: 'var(--shadow-md)',
+                textDecoration: 'none',
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
               Open Chat
             </Link>
 
             {/* Mobile Menu Toggle */}
             <button
-              className="md:hidden w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-105"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              style={{ 
+                display: window.innerWidth >= 768 ? 'none' : 'flex',
+                width: '2.5rem', 
+                height: '2.5rem', 
+                borderRadius: '0.5rem', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                background: 'var(--surface)', 
+                border: '1px solid var(--border)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -117,19 +192,28 @@ export function Navigation() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden overflow-hidden"
             style={{ 
+              display: window.innerWidth >= 768 ? 'none' : 'block',
+              overflow: 'hidden',
               background: 'var(--background)',
               borderBottom: '1px solid var(--border)'
             }}
           >
-            <div className="px-4 py-4 space-y-2">
+            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block px-4 py-3 rounded-lg text-sm font-medium"
-                  style={{ color: 'var(--text-primary)', background: 'var(--surface)' }}
+                  style={{ 
+                    display: 'block',
+                    padding: '0.75rem 1rem', 
+                    borderRadius: '0.5rem', 
+                    fontSize: '0.875rem', 
+                    fontWeight: 500,
+                    color: 'var(--text-primary)', 
+                    background: 'var(--surface)',
+                    textDecoration: 'none'
+                  }}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
@@ -137,8 +221,17 @@ export function Navigation() {
               ))}
               <Link
                 href="/chat"
-                className="block px-4 py-3 rounded-lg text-sm font-medium text-center text-white"
-                style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' }}
+                style={{ 
+                  display: 'block',
+                  padding: '0.75rem 1rem', 
+                  borderRadius: '0.5rem', 
+                  fontSize: '0.875rem', 
+                  fontWeight: 500, 
+                  textAlign: 'center', 
+                  color: 'white',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                  textDecoration: 'none'
+                }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Open Chat

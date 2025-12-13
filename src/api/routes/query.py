@@ -33,12 +33,12 @@ router = APIRouter(tags=["Query"])
 async def query(request: QueryRequest):
     """Process query through RAG pipeline."""
     try:
-        from src.pipeline import run_rag_pipeline
+        from src.pipeline import run_rag_pipeline_async
         
         logger.info(f"Processing query: {request.query[:50]}...")
         
-        # Run pipeline
-        result = run_rag_pipeline(request.query)
+        # Run pipeline (now using async version)
+        result = await run_rag_pipeline_async(request.query)
         
         # Build citations
         citations = []

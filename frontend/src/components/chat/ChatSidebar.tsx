@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, MessageSquare, Trash2, X, Menu, Zap } from 'lucide-react';
 
@@ -19,6 +19,49 @@ interface ChatSidebarProps {
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
+}
+
+// Separate component to handle hover state properly
+function ChatHistoryItemComponent({ 
+  item, 
+  activeId, 
+  onSelectChat, 
+  onDeleteChat 
+}: { 
+  item: ChatHistoryItem; 
+  activeId: string | null; 
+  onSelectChat: (id: string) => void; 
+  onDeleteChat: (id: string) => void; 
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      key={item.id}
+      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', cursor: 'pointer', transition: 'all 0.2s', background: item.id === activeId ? 'var(--background)' : 'transparent', borderLeft: item.id === activeId ? '3px solid var(--primary)' : '3px solid transparent', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }}
+      onClick={() => onSelectChat(item.id)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <MessageSquare size={14} style={{ color: 'var(--text-tertiary)' }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
+          {item.title}
+        </p>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDeleteChat(item.id);
+        }}
+        style={{ padding: '0.25rem', borderRadius: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'all 0.2s', opacity: isHovered ? 1 : 0 }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <Trash2 size={14} style={{ color: 'var(--error)' }} />
+      </button>
+    </div>
+  );
 }
 
 export function ChatSidebar({
@@ -95,36 +138,15 @@ export function ChatSidebar({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {history.map((item) => {
-                const [isHovered, setIsHovered] = React.useState(false);
-                return (
-                  <div
-                    key={item.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', cursor: 'pointer', transition: 'all 0.2s', background: item.id === activeId ? 'var(--background)' : 'transparent', borderLeft: item.id === activeId ? '3px solid var(--primary)' : '3px solid transparent', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }}
-                    onClick={() => onSelectChat(item.id)}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                  >
-                    <MessageSquare size={14} style={{ color: 'var(--text-tertiary)' }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
-                        {item.title}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteChat(item.id);
-                      }}
-                      style={{ padding: '0.25rem', borderRadius: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'all 0.2s', opacity: isHovered ? 1 : 0 }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                      <Trash2 size={14} style={{ color: 'var(--error)' }} />
-                    </button>
-                  </div>
-                );
-              })}
+              {history.map((item) => (
+                <ChatHistoryItemComponent
+                  key={item.id}
+                  item={item}
+                  activeId={activeId}
+                  onSelectChat={onSelectChat}
+                  onDeleteChat={onDeleteChat}
+                />
+              ))}
             </div>
           )}
         </div>

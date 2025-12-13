@@ -84,7 +84,37 @@ def get_rag_graph():
 
 def run_rag_pipeline(query: str) -> Dict[str, Any]:
     """
-    Run a query through the full RAG pipeline.
+    Run a query through the full RAG pipeline (sync wrapper).
+    
+    Args:
+        query: User question
+        
+    Returns:
+        Dict with answer, citations, and metadata
+    """
+    import asyncio
+    
+    # Check if there's a running event loop
+    try:
+        loop = asyncio.get_running_loop()
+        # If we're already in an async context, use the async version directly
+        # This should be called from async code instead
+        raise RuntimeError(
+            "run_rag_pipeline should not be called from async context. "
+            "Use run_rag_pipeline_async instead."
+        )
+    except RuntimeError as e:
+        if "no running event loop" in str(e).lower():
+            # No running loop, safe to use asyncio.run()
+            return asyncio.run(run_rag_pipeline_async(query))
+        else:
+            # Re-raise the error about wrong usage
+            raise
+
+
+async def run_rag_pipeline_async(query: str) -> Dict[str, Any]:
+    """
+    Run a query through the full RAG pipeline (async version).
     
     Args:
         query: User question
@@ -95,7 +125,8 @@ def run_rag_pipeline(query: str) -> Dict[str, Any]:
     graph = get_rag_graph()
     initial_state = create_initial_state(query)
     
-    result = graph.invoke(initial_state)
+    # Use ainvoke for async execution
+    result = await graph.ainvoke(initial_state)
     
     return {
         "query": result["query"],

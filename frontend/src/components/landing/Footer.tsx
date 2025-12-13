@@ -2,6 +2,7 @@
 
 import { Github } from 'lucide-react';
 import { Logo } from '../shared/Logo';
+import { APIStatus } from '@/components/common/APIStatus';
 
 const techStack = [
   'Next.js',
@@ -45,8 +46,9 @@ export function Footer() {
             ))}
           </div>
 
-          {/* Right - Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Right - Links & Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <APIStatus />
             <a
               href="https://github.com"
               target="_blank"

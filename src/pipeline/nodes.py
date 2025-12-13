@@ -90,8 +90,8 @@ def decompose_node(state: RAGState) -> RAGState:
     return state
 
 
-def retrieve_node(state: RAGState) -> RAGState:
-    """Retrieve documents for sub-queries."""
+async def retrieve_node(state: RAGState) -> RAGState:
+    """Retrieve documents for sub-queries (async version)."""
     retriever = _get_retriever()
     fusion = _get_fusion()
     start = time.time()
@@ -112,8 +112,8 @@ def retrieve_node(state: RAGState) -> RAGState:
     while len(routes) < len(sub_queries):
         routes.append(routes[0] if routes else "financial")
     
-    # Retrieve
-    result = retriever.retrieve_all(sub_queries, routes[:len(sub_queries)])
+    # Retrieve (now using async version)
+    result = await retriever.retrieve_all_async(sub_queries, routes[:len(sub_queries)])
     
     # Fuse
     fused = fusion.merge(result.documents)

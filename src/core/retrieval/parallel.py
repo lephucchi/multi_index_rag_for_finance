@@ -315,7 +315,25 @@ class ParallelRetriever:
         k_per_index: Optional[int] = None
     ) -> RetrievalResult:
         """Synchronous wrapper for retrieve_all_async."""
-        return asyncio.run(self.retrieve_all_async(sub_queries, routes, k_per_index))
+        try:
+            # Try to get the current event loop
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're already in an async context, create a new task
+                import nest_asyncio
+                nest_asyncio.apply()
+                return loop.run_until_complete(self.retrieve_all_async(sub_queries, routes, k_per_index))
+            else:
+                # If no loop is running, use asyncio.run
+                return asyncio.run(self.retrieve_all_async(sub_queries, routes, k_per_index))
+        except RuntimeError:
+            # Fallback: create new event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(self.retrieve_all_async(sub_queries, routes, k_per_index))
+            finally:
+                loop.close()
     
     @staticmethod
     def _deduplicate(docs: List[RetrievedDocument]) -> List[RetrievedDocument]:

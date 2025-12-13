@@ -1,32 +1,48 @@
 # Multi-Index RAG Frontend
 
-Modern, responsive chat interface for the Multi-Index RAG system built with Next.js 16 and TailwindCSS v4.
+Modern, responsive chat interface for the Multi-Index RAG system built with Next.js 16.
 
 ## ✨ Features
 
-- 🎨 **Premium UI Design** - Glassmorphism, gradients, smooth animations
-- 🌐 **Vietnamese Localization** - Full Vietnamese UI labels and messages
-- 📱 **Responsive** - Works on desktop, tablet, and mobile
+- 🎨 **Modern UI Design** - Smooth animations, professional styling
+- 🌐 **Bilingual Support** - Vietnamese and English interface
+- 📱 **Fully Responsive** - Sidebar layout adapts to screen size
 - ⚡ **Real-time Chat** - Instant query processing with loading states
 - 📚 **Citation Support** - Interactive source references with previews
-- 🎯 **Route Badges** - Visual indicators for glossary, legal, financial, news
+- 🎯 **Route Indicators** - Visual badges for query routing (glossary, legal, financial, news)
 - ⌨️ **Keyboard Shortcuts** - Enter to send, Shift+Enter for new line
+- 🔌 **Backend Integration** - Real-time API status monitoring
+- 🌓 **Dark Mode** - Full theme support with CSS variables
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- FastAPI backend running on `http://localhost:8000`
+- FastAPI backend running on `http://localhost:8000` (see main [README](../README.md))
 
 ### Installation
 
 ```bash
-# Install dependencies
+cd frontend
 npm install
 
 # Create environment file
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+cp .env.example .env.local
+```
+
+### Environment Configuration
+
+Edit `.env.local`:
+
+```bash
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# App Configuration (optional)
+NEXT_PUBLIC_APP_NAME=Multi-Index RAG
+NEXT_PUBLIC_APP_VERSION=1.0.0
+```
 
 # Run development server
 npm run dev

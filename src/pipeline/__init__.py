@@ -9,13 +9,13 @@ Components:
 - Graph: StateGraph with conditional edges
 
 Example:
-    >>> from src.pipeline import run_rag_pipeline
-    >>> result = run_rag_pipeline("ROE là gì và VNM có ROE bao nhiêu")
+    >>> from src.pipeline import run_rag_pipeline_async
+    >>> result = await run_rag_pipeline_async("ROE là gì và VNM có ROE bao nhiêu")
     >>> print(result["answer"])
 """
 from .state import RAGState, create_initial_state
 from .nodes import route_node, decompose_node, retrieve_node, generate_node
-from .graph import build_rag_graph, get_rag_graph, run_rag_pipeline
+from .graph import build_rag_graph, get_rag_graph, run_rag_pipeline, run_rag_pipeline_async
 
 __all__ = [
     # State
@@ -30,4 +30,5 @@ __all__ = [
     "build_rag_graph",
     "get_rag_graph",
     "run_rag_pipeline",
+    "run_rag_pipeline_async",
 ]

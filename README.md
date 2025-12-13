@@ -143,6 +143,26 @@ openai_api_key=your-key  # or GEMINI_API_KEY
 
 ### Run
 
+#### Option 1: Run Backend + Frontend Together (Recommended)
+
+**Windows (PowerShell):**
+```bash
+.\start-dev.ps1
+```
+
+**Linux/Mac:**
+```bash
+chmod +x start-dev.sh
+./start-dev.sh
+```
+
+This will start:
+- Backend API on `http://localhost:8000`
+- Frontend on `http://localhost:3000`
+
+#### Option 2: Run Separately
+
+**Backend only:**
 ```bash
 # Test pipeline (requires langgraph)
 python -c "from src.pipeline import run_rag_pipeline; print(run_rag_pipeline('ROE là gì'))"
@@ -152,6 +172,14 @@ uvicorn src.api.main:app --reload --port 8000
 
 # Access docs
 open http://localhost:8000/docs
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+# Access at http://localhost:3000
 ```
 
 ---
