@@ -25,17 +25,42 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan handler."""
+    """Application lifespan handler with model pre-warming."""
     logger.info("Starting Multi-Index RAG API...")
     
-    # Startup: Pre-warm components (optional)
-    # from src.pipeline import get_rag_graph
-    # get_rag_graph()  # Build graph on startup
+    # =========================================================================
+    # Startup: Pre-warm models to eliminate cold start latency
+    # =========================================================================
+    try:
+        logger.info("Pre-warming models...")
+        
+        # 1. Pre-warm router
+        from src.core.router import HybridRouter
+        router = HybridRouter()
+        _ = router.route("warmup query")
+        logger.info("✓ Router pre-warmed")
+        
+        # 2. Pre-warm retriever encoder
+        from src.core.retrieval import ParallelRetriever
+        retriever = ParallelRetriever()
+        _ = retriever.retrieve("warmup", "glossary", k=1)
+        logger.info("✓ Retriever encoder pre-warmed")
+        
+        # 3. Initialize embedding cache
+        from src.core.retrieval import get_embedding_cache
+        cache = get_embedding_cache(maxsize=1000)
+        logger.info(f"✓ Embedding cache initialized (maxsize={cache.maxsize})")
+        
+        logger.info("All models pre-warmed successfully!")
+        
+    except Exception as e:
+        logger.warning(f"Pre-warming failed (non-critical): {e}")
     
     yield
     
     # Shutdown
     logger.info("Shutting down API...")
+
 
 
 # Create FastAPI app

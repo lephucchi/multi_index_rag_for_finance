@@ -1,0 +1,61 @@
+{
+  "query": "Toi la mot doanh nhan khoi nghiep trong linh vuc bat dong san, hay tu van cho toi ve mot so cong ty bat dong san da duoc niem yet de toi co the hoc tap va cac bo luat co the cho toi dua vao do phat trien doanh nghiep cua minh.",
+  "success": true,
+  "classification": {
+    "is_complex": true,
+    "score": 0.4,
+    "reason": "long_query: 53 words"
+  },
+  "routing": {
+    "routes": [
+      "news",
+      "legal",
+      "glossary",
+      "financial"
+    ],
+    "scores": {
+      "glossary": 0.3211767077445984,
+      "legal": 0.37760215997695923,
+      "financial": 0.29926231503486633,
+      "news": 0.38233983516693115
+    }
+  },
+  "decomposition": {
+    "sub_queries": [
+      "Các công ty bất động sản niêm yết tại Việt Nam",
+      "Các bộ luật liên quan đến phát triển doanh nghiệp bất động sản tại Việt Nam"
+    ],
+    "types": [
+      "FINANCIAL",
+      "LEGAL"
+    ]
+  },
+  "retrieval": {
+    "num_docs": 16
+  },
+  "generation": {
+    "is_grounded": true,
+    "citations": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      9,
+      10,
+      11,
+      12,
+      14
+    ],
+    "answer": "Chào bạn, với vai trò là một doanh nhân khởi nghiệp trong lĩnh vực bất động sản, bạn có thể tham khảo các thông tin sau từ tài liệu được cung cấp:\n\n**I. Các công ty bất động sản để học tập:**\n\nDựa trên các tài liệu được cung cấp, bạn có thể tham khảo một số công ty có liên quan đến lĩnh vực bất động sản như:\n*   Petro Vietnam Construction Joint Stock Corporation [14]\n*   Phu Long Real Estates Corporation [14]\n*   Songkim Investment Coporation [14]\n*   Công ty Nam Long, với các dự án như Southgate (Waterpoint phase 2), Mizuki, Izumi City, Akari, Nam Long - Cần Thơ, Nam Long Đại Phước [11].\n\nCác công ty này hoạt động trong các lĩnh vực như đầu tư xây dựng và kinh doanh khu đô thị, xây dựng dân dụng và công nghiệp, kinh doanh nhà ở (xây dựng, sửa chữa hoặc cho thuê), dịch vụ nhà ở [11]. Thị trường bất động sản đang có sự phục hồi với giao dịch tích cực hơn và tồn kho giảm [12]. Nhu cầu về xây dựng và phát triển bất động sản đang phục hồi [12], đặc biệt là bất động sản công nghiệp đang phát triển mạnh mẽ với dòng vốn FDI tăng [14].\n\n**II. Các bộ luật và quy định liên quan để phát triển doanh nghiệp:**\n\nLuật Kinh Doanh Bất Động Sản là bộ luật chính mà bạn cần nắm vững:\n\n1.  **Phạm vi điều chỉnh và định nghĩa:**\n    *   Luật này quy định về kinh doanh bất động sản, quyền và nghĩa vụ của tổ chức, cá nhân trong kinh doanh bất động sản và quản lý nhà nước về kinh doanh bất động sản [1].\n    *   Kinh doanh bất động sản là hoạt động nhằm mục đích tìm kiếm lợi nhuận thông qua việc bỏ vốn để tạo lập nhà ở, công trình xây dựng, quyền sử dụng đất đã có hạ tầng kỹ thuật trong dự án bất động sản để bán, chuyển nhượng; cho thuê, cho thuê lại, cho thuê mua nhà ở, công trình xây dựng; cho thuê, cho thuê lại quyền sử dụng đất đã có hạ tầng kỹ thuật trong dự án bất động sản [9].\n    *   Luật này không điều chỉnh các trường hợp cơ quan, tổ chức bán nhà ở, công trình xây dựng, chuyển nhượng quyền sử dụng đất do phá sản, giải thể, chia, tách; chuyển quyền sở hữu [1].\n\n2.  **Chính sách của Nhà nước:**\n    *   Nhà nước khuyến khích tổ chức, cá nhân thuộc các thành phần kinh tế đầu tư kinh doanh bất động sản phù hợp với mục tiêu phát triển kinh tế - xã hội của đất nước trong từng thời kỳ và từng địa bàn [2].\n    *   Nhà nước khuyến khích và có chính sách ưu đãi cho tổ chức, cá nhân đầu tư [2].\n\n3.  **Điều kiện đối với doanh nghiệp kinh doanh bất động sản:**\n    *   Tổ chức, cá nhân khi kinh doanh bất động sản phải thành lập doanh nghiệp theo quy định của pháp luật về doanh nghiệp hoặc thành lập hợp tác xã, liên hiệp hợp tác xã theo quy định của pháp luật về hợp tác xã, có ngành, nghề kinh doanh bất động sản [3].\n\n4.  **Các loại bất động sản được đưa vào kinh doanh:**\n    *   Bao gồm nhà ở có sẵn và nhà ở hình thành trong tương lai [6].\n    *   Công trình xây dựng có sẵn, công trình xây dựng hình thành trong tương lai, bao gồm công trình có công năng phục vụ mục đích giáo dục, y tế, thể thao, văn hóa, văn phòng, thương mại, dịch vụ, du lịch, lưu trú, công nghiệp và công trình khác [6].\n    *   Phần diện tích sàn xây dựng trong công trình xây dựng [6].\n    *   Quyền sử dụng đất đã có hạ tầng kỹ thuật trong dự án bất động sản [6].\n\n5.  **Yêu cầu đối với dự án bất động sản:**\n    *   Dự án bất động sản phải phù hợp với quy hoạch, kế hoạch sử dụng đất [10].\n    *   Dự án phải phù hợp với quy hoạch được phê duyệt theo quy định của pháp luật về xây dựng, pháp luật về quy hoạch đô thị [10].\n    *   Trình tự, thủ tục đầu tư xây dựng dự án bất động sản thực hiện theo quy định của pháp luật về quy hoạch, đầu tư, đất đai, xây dựng và pháp luật có liên quan [10].\n\n6.  **Nghĩa vụ công khai thông tin:**\n    *   Trước khi đưa bất động sản, dự án bất động sản vào kinh doanh, doanh nghiệp kinh doanh bất động sản phải công khai đầy đủ, trung thực và chính xác thông tin trên hệ thống thông tin về nhà ở và thị trường bất động sản [4].\n\n7.  **Hợp đồng trong kinh doanh bất động sản:**\n    *   Các loại hợp đồng bao gồm hợp đồng mua bán, hợp đồng thuê mua nhà ở; hợp đồng thuê nhà ở; hợp đồng mua bán, hợp đồng thuê mua công trình xây dựng,"
+  },
+  "step_times": {
+    "classification": 11620.858907699585,
+    "routing": 17792.57583618164,
+    "decomposition": 4969.873428344727,
+    "retrieval": 11904.27541732788,
+    "fusion": 0.0,
+    "generation": 9953.353643417358
+  },
+  "total_time_ms": 56240.93723297119
+}

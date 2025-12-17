@@ -1,0 +1,85 @@
+﻿python : src.pipeline.graph | langgraph not installed. Install with: pip install langgraph
+At line:1 char:1
++ python -c "
++ ~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (src.pipeline.gr...stall langgraph:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+src.pipeline.nodes | ===================== STEP 1: ROUTING =====================
+src.pipeline.nodes | [INPUT] Query: ROE la gi va VNM co ROE bao nhieu trong nam 2023?
+sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: BAAI/bge-m3
+src.pipeline.nodes | [OUTPUT] Selected Routes: ['financial']
+src.pipeline.nodes | [OUTPUT] All Scores:
+src.pipeline.nodes |   - financial   : 0.468 #########
+src.pipeline.nodes |   - news        : 0.389 #######
+src.pipeline.nodes |   - legal       : 0.311 ######
+src.pipeline.nodes |   - glossary    : 0.311 ######
+src.pipeline.nodes | [TIME] Route: 14496.34ms
+src.pipeline.nodes | [CLASSIFY] Query: ROE la gi va VNM co ROE bao nhieu trong nam 2023?
+src.pipeline.nodes | [CLASSIFY] Is Complex: True
+src.pipeline.nodes | [CLASSIFY] Score: 0.40
+src.pipeline.nodes | [CLASSIFY] Reason: long_query: 12 words
+src.pipeline.nodes | ================== STEP 2: DECOMPOSITION ==================
+src.pipeline.nodes | [INPUT] Query: ROE la gi va VNM co ROE bao nhieu trong nam 2023?
+src.pipeline.nodes | [OUTPUT] Is Decomposed: True
+src.pipeline.nodes | [OUTPUT] Method: llm
+src.pipeline.nodes | [OUTPUT] Sub-queries (2):
+src.pipeline.nodes |   [1] Type: GLOSSARY
+src.pipeline.nodes |       Query: ROE lα g∞
+src.pipeline.nodes |   [2] Type: FINANCIAL
+src.pipeline.nodes |       Query: VNM c≤ ROE bao nhiΩu trong n\u0103m 2023
+src.pipeline.nodes | [OUTPUT] Reasoning: Tßch \u0111\u1ecbnh ngh\u0129a thu\u1eadt ng\u1eef (GLOSSARY) vα d\u1eef 
+li\u1ec7u tαi chφnh c\u1ee5 th\u1ec3 (FINANCIAL) theo th\u1ee9 t\u1ef1 logic.
+src.pipeline.nodes | [TIME] Decompose: 4384.61ms
+src.pipeline.nodes | ==================== STEP 3: RETRIEVAL ====================
+src.pipeline.nodes | [INPUT] Retrieval Plan:
+src.pipeline.nodes |   [1] Query: ROE lα g∞
+src.pipeline.nodes |       -> Index: glossary
+src.pipeline.nodes |   [2] Query: VNM c≤ ROE bao nhiΩu trong n\u0103m 2023
+src.pipeline.nodes |       -> Index: financial
+src.core.retrieval.parallel | Loading encoder: BAAI/bge-m3
+src.core.retrieval.parallel | Loading encoder: BAAI/bge-m3
+sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: BAAI/bge-m3
+sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: BAAI/bge-m3
+src.core.retrieval.parallel | Task error: Cannot copy out of meta tensor; no data! Please use torch.nn.Module.to_empty() 
+instead of torch.nn.Module.to() when moving module from meta to a different device.
+src.core.retrieval.parallel | Task error: Cannot copy out of meta tensor; no data! Please use torch.nn.Module.to_empty() 
+instead of torch.nn.Module.to() when moving module from meta to a different device.
+src.pipeline.nodes | [OUTPUT] Documents Retrieved: 0
+src.pipeline.nodes | [OUTPUT] Retrieval Time: 10673.78ms
+src.pipeline.nodes | [OUTPUT] Top Documents Preview:
+src.pipeline.nodes | [OUTPUT] After Fusion: 0 documents
+src.pipeline.nodes | [OUTPUT] Context Length: 23 chars
+src.pipeline.nodes | [OUTPUT] Citations: 0 entries
+src.pipeline.nodes | [TIME] Retrieve + Fusion: 10972.16ms
+src.pipeline.nodes | ==================== STEP 4: GENERATION ====================
+src.pipeline.nodes | [INPUT] Query: ROE la gi va VNM co ROE bao nhieu trong nam 2023?
+src.pipeline.nodes | [INPUT] Context Length: 23 chars
+src.pipeline.nodes | [INPUT] Available Citations: 0
+src.pipeline.nodes | [OUTPUT] Is Grounded: False
+src.pipeline.nodes | [OUTPUT] Citations Used: []
+src.pipeline.nodes | [OUTPUT] Answer Preview: Kh⌠ng t∞m th\u1ea5y tαi li\u1ec7u liΩn quan \u0111\u1ebfn cΓu h\u1ecfi 
+c\u1ee7a b\u1ea1n.
+src.pipeline.nodes | [TIME] Generate: 6.37ms
+src.pipeline.nodes | ===================== PIPELINE SUMMARY =====================
+src.pipeline.nodes | Total Time: 29859.47ms
+src.pipeline.nodes | Time Breakdown:
+src.pipeline.nodes |   - route       : 14496.34ms ( 48.5%)
+src.pipeline.nodes |   - decompose   :  4384.61ms ( 14.7%)
+src.pipeline.nodes |   - retrieve    : 10972.16ms ( 36.7%)
+src.pipeline.nodes |   - generate    :     6.37ms (  0.0%)
+Testing complex query...
+Loading encoder model: BAAI/bge-m3...
+  Computing embeddings for route: glossary (29 examples)
+  Computing embeddings for route: legal (23 examples)
+  Computing embeddings for route: financial (24 examples)
+  Computing embeddings for route: news (24 examples)
+Router initialized with 4 routes.
+\n=== FINAL RESULT ===
+Answer: Kh├┤ng t├¼m thß║Ñy t├ái liß╗çu li├¬n quan ─æß║┐n c├óu hß╗Åi cß╗ºa bß║ín.
+Grounded: False
+Routes: ['financial']
+Sub-queries: ['ROE l├á g├¼', 'VNM c├│ ROE bao nhi├¬u trong n─âm 2023']

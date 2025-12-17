@@ -1,0 +1,50 @@
+{
+  "query": "Toi la mot doanh nhan khoi nghiep trong linh vuc bat dong san, hay tu van cho toi ve mot so cong ty bat dong san da duoc niem yet de toi co the hoc tap va cac bo luat co the cho toi dua vao do phat trien doanh nghiep cua minh.",
+  "success": true,
+  "classification": {
+    "is_complex": true,
+    "score": 0.4,
+    "reason": "long_query: 53 words"
+  },
+  "routing": {
+    "routes": [
+      "news",
+      "legal",
+      "glossary",
+      "financial"
+    ],
+    "scores": {
+      "glossary": 0.3211767077445984,
+      "legal": 0.37760215997695923,
+      "financial": 0.29926231503486633,
+      "news": 0.38233983516693115
+    }
+  },
+  "decomposition": {
+    "sub_queries": [
+      "Các công ty bất động sản đã được niêm yết tại Việt Nam",
+      "Các bộ luật liên quan đến phát triển doanh nghiệp bất động sản tại Việt Nam"
+    ],
+    "types": [
+      "FINANCIAL",
+      "LEGAL"
+    ]
+  },
+  "retrieval": {
+    "num_docs": 0
+  },
+  "generation": {
+    "is_grounded": false,
+    "citations": [],
+    "answer": "Không tìm thấy tài liệu liên quan đến câu hỏi của bạn."
+  },
+  "step_times": {
+    "classification": 8726.82499885559,
+    "routing": 15109.977960586548,
+    "decomposition": 5824.780464172363,
+    "retrieval": 14302.208662033081,
+    "fusion": 0.0,
+    "generation": 13.795614242553711
+  },
+  "total_time_ms": 43977.58769989014
+}

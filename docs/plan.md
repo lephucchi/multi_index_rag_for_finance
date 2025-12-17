@@ -2217,7 +2217,56 @@ python src/query.py "P/E ratio của VNM?"
 
 ---
 
+## BƯỚC 7: System Optimization Phase 1
+
+### 🎯 Mục Tiêu Của Bước Này
+
+- Cải thiện chất lượng câu trả lời từ "academic/legal" sang "consulting/actionable"
+- Giảm latency từ ~56s xuống <20s
+- Tối ưu hóa routing và retrieval dựa trên production feedback
+
+### ✅ Điều Kiện Tiên Quyết
+
+- ✔ Hoàn thành Bước 6: MVP đang hoạt động
+- ✔ Production testing results với complex queries
+- ✔ Identified bottlenecks và quality issues
+
+### 🎁 Kết Quả Mong Đợi
+
+- ✅ **Persona Rewriter Module**: Chuyển đổi câu trả lời theo user persona
+- ✅ **Smart News Routing**: Chỉ route tới news khi có temporal keywords
+- ✅ **Latency Optimization**:
+  - True parallel retrieval
+  - Query embedding cache
+  - Fast/Deep mode split
+- ✅ **Model Pre-warming**: Eliminate cold start latency
+
+### 📋 Chi Tiết Implementation
+
+Xem file: [Step7_Optimize_System_Phase1.md](./plan/Step7_Optimize_System_Phase1.md)
+
+### 📊 Target Metrics
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| Routes selected | 4 (all) | 2-3 (smart) |
+| Latency (simple) | ~30s | <10s |
+| Latency (complex) | ~56s | <25s |
+| Answer style | Academic | Consulting |
+
+### ⏱ Thời Gian Ước Tính
+
+- Phase 1A (Persona Rewriter): 1 ngày
+- Phase 1B (Smart Routing): 0.5 ngày
+- Phase 1C (Latency): 2-3 ngày
+- Phase 1D (Pre-warming): 0.5 ngày
+- Integration & Testing: 1 ngày
+- **Tổng**: ~5-6 ngày
+
+---
+
 ## 🔗 Tài Liệu Tham Khảo Chính
+
 
 ### Foundational Papers
 

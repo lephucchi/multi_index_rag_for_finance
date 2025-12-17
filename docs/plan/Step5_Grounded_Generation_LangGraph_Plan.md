@@ -276,10 +276,9 @@ class GroundedGenerator:
     @property
     def model(self):
         if self._model is None:
-            import google.generativeai as genai
+            from google import genai
             import os
-            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-            self._model = genai.GenerativeModel(self.config.model_name)
+            self._model = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         return self._model
     
     def generate(

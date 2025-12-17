@@ -24,7 +24,7 @@ class RetrieverConfig:
         supabase_key: Supabase service role key
     """
     encoder_model: str = "BAAI/bge-m3"
-    k_per_index: int = 5
+    k_per_index: int = 10
     timeout_seconds: float = 30.0
     supabase_url: str = ""
     supabase_key: str = ""
@@ -34,7 +34,7 @@ class RetrieverConfig:
         """Create config from environment variables."""
         return cls(
             encoder_model=os.getenv("ENCODER_MODEL", "BAAI/bge-m3"),
-            k_per_index=int(os.getenv("K_PER_INDEX", "5")),
+            k_per_index=int(os.getenv("K_PER_INDEX", "10")),
             timeout_seconds=float(os.getenv("RETRIEVAL_TIMEOUT", "30.0")),
             supabase_url=os.getenv("supabase_url", ""),
             supabase_key=os.getenv("supabase_service_role_key", ""),
@@ -50,7 +50,7 @@ class FusionConfig:
         max_docs: Maximum documents to return after fusion
         source_weights: Weight multipliers per source
     """
-    max_docs: int = 10
+    max_docs: int = 15
     
     # Source-based weights
     source_weights: Dict[str, float] = None
@@ -76,7 +76,7 @@ class FusionConfig:
 INDEX_TABLE_MAP = {
     "glossary": "glossary_index",
     "legal": "legal_index",
-    "financial": "financial_index",
+    "financial": "finance_index",
     "news": "news_index"
 }
 

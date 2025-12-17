@@ -1,0 +1,53 @@
+{
+  "query": "Toi la mot doanh nhan khoi nghiep trong linh vuc bat dong san, hay tu van cho toi ve mot so cong ty bat dong san da duoc niem yet de toi co the hoc tap va cac bo luat co the cho toi dua vao do phat trien doanh nghiep cua minh.",
+  "success": true,
+  "classification": {
+    "is_complex": true,
+    "score": 0.4,
+    "reason": "long_query: 53 words"
+  },
+  "routing": {
+    "routes": [
+      "financial"
+    ],
+    "scores": {
+      "glossary": 0.3211767077445984,
+      "legal": 0.37760215997695923,
+      "financial": 0.29926231503486633,
+      "news": 0.38233983516693115
+    }
+  },
+  "decomposition": {
+    "sub_queries": [
+      "Các bộ luật liên quan đến phát triển doanh nghiệp bất động sản tại Việt Nam",
+      "Một số công ty bất động sản đã niêm yết tại Việt Nam"
+    ],
+    "types": [
+      "LEGAL",
+      "FINANCIAL"
+    ]
+  },
+  "retrieval": {
+    "num_docs": 5
+  },
+  "generation": {
+    "is_grounded": true,
+    "citations": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "answer": "Chào bạn,\n\nDựa trên các tài liệu được cung cấp, tôi không tìm thấy thông tin cụ thể về tên các công ty bất động sản đã niêm yết để bạn có thể học tập [1], [2], [3], [4], [5]. Các tài liệu chỉ đề cập chung đến \"công ty\" đang phát triển dự án [1], [5] hoặc có doanh thu ổn định trong lĩnh vực bất động sản tại TP.HCM [5].\n\nVề các bộ luật hoặc chính sách cụ thể, tài liệu có đề cập đến một số định hướng của Chính phủ Việt Nam trong lĩnh vực bất động sản:\n*   Chính phủ Việt Nam khuyến khích đầu tư và phát triển các tòa nhà chung cư để tăng nguồn cung nhà ở [2].\n*   Chính phủ Việt Nam từng bước ban hành các chính sách khuyến khích phát triển kinh tế, bao gồm xây dựng bất động sản, nhà ở và khu nghỉ dưỡng [3].\n*   Chính phủ Việt Nam đã ban hành các chính sách nhằm làm cho thị trường bất động sản minh bạch hơn để thu hút thêm nhà đầu tư [4].\n\nTuy nhiên, không có tên cụ thể của các bộ luật hay văn bản pháp lý nào được nêu trong tài liệu được cung cấp [1], [2], [3], [4], [5]."
+  },
+  "step_times": {
+    "classification": 8462.897062301636,
+    "routing": 15207.37338066101,
+    "decomposition": 5039.0119552612305,
+    "retrieval": 16106.422185897827,
+    "fusion": 0.9374618530273438,
+    "generation": 7291.534423828125
+  },
+  "total_time_ms": 52108.17646980286
+}

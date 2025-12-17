@@ -1,0 +1,27 @@
+[
+  {
+    "query": "ROE là gì và VNM có ROE bao nhiêu trong năm 2023?",
+    "success": false,
+    "error": "DecomposerConfig.__init__() missing 1 required positional argument: 'model_name'"
+  },
+  {
+    "query": "Quy định về công bố thông tin của công ty đại chúng là gì và VIC có tuân thủ không?",
+    "success": false,
+    "error": "DecomposerConfig.__init__() missing 1 required positional argument: 'model_name'"
+  },
+  {
+    "query": "So sánh chỉ số P/E của VNM, MSN và VIC trong quý 3/2023",
+    "success": false,
+    "error": "DecomposerConfig.__init__() missing 1 required positional argument: 'model_name'"
+  },
+  {
+    "query": "EPS là gì?",
+    "success": false,
+    "error": "'RetrievalResult' object has no attribute 'retrieval_time_ms'"
+  },
+  {
+    "query": "Phân tích tình hình tài chính của Vinamilk bao gồm doanh thu, lợi nhuận, và các chỉ số ROE, ROA. Đồng thời cho biết quy định về tỷ lệ sở hữu nước ngoài tại doanh nghiệp sữa Việt Nam.",
+    "success": false,
+    "error": "DecomposerConfig.__init__() missing 1 required positional argument: 'model_name'"
+  }
+]

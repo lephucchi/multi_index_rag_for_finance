@@ -18,11 +18,12 @@ logger = logging.getLogger(__name__)
 
 # Optional Gemini import
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    logger.warning("google-generativeai not installed")
+    logger.warning("google-genai not installed")
 
 
 @dataclass
@@ -63,21 +64,25 @@ class GeminiLLM:
     
     def __init__(self, model_name: str, api_key: Optional[str] = None):
         if not GEMINI_AVAILABLE:
-            raise ImportError("google-generativeai not installed")
+            raise ImportError("google-genai not installed")
         
         api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY not found")
         
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model_name)
+        self.client = genai.Client(api_key=api_key)
+        self.model_name = model_name
     
     def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 2048) -> str:
-        config = genai.GenerationConfig(
+        config = types.GenerateContentConfig(
             temperature=temperature,
             max_output_tokens=max_tokens
         )
-        response = self.model.generate_content(prompt, generation_config=config)
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=prompt,
+            config=config
+        )
         return response.text
 
 

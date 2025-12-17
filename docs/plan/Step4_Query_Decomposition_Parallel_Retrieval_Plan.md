@@ -788,8 +788,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-import google.generativeai as genai
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+from google import genai
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 from decomposer import QueryDecomposer
 from classifier import QueryComplexityClassifier
@@ -913,7 +913,7 @@ python -m src.pipeline.test_pipeline
 
 ```bash
 # Add to requirements.txt
-google-generativeai>=0.3.0
+google-genai>=1.0.0
 asyncio>=3.4.3
 ```
 

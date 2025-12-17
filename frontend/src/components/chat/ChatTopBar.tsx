@@ -19,7 +19,7 @@ export function ChatTopBar() {
           onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
         >
           <ArrowLeft size={18} />
-          <span style={{ display: window.innerWidth >= 640 ? 'inline' : 'none' }}>Back to Home</span>
+          <span className="hidden sm:inline">Back to Home</span>
         </Link>
 
         {/* Title */}

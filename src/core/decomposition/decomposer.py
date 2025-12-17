@@ -26,11 +26,12 @@ logger = logging.getLogger(__name__)
 
 # Optional Gemini import
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    logger.warning("google-generativeai not installed. LLM decomposition disabled.")
+    logger.warning("google-genai not installed. LLM decomposition disabled.")
 
 
 @dataclass
@@ -110,21 +111,25 @@ class GeminiClient:
     
     def __init__(self, model_name: str, api_key: Optional[str] = None):
         if not GEMINI_AVAILABLE:
-            raise ImportError("google-generativeai not installed")
+            raise ImportError("google-genai not installed")
         
         api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY not found")
         
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model_name)
-        self.config = genai.GenerationConfig(
+        self.client = genai.Client(api_key=api_key)
+        self.model_name = model_name
+        self.config = types.GenerateContentConfig(
             temperature=0.1,
             max_output_tokens=1024
         )
     
     def generate(self, prompt: str) -> str:
-        response = self.model.generate_content(prompt, generation_config=self.config)
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=prompt,
+            config=self.config
+        )
         return response.text
 
 
@@ -225,9 +230,8 @@ class QueryDecomposer:
         prompt = build_few_shot_prompt(query)
         response_text = self.llm_client.generate(prompt)
         
-        # Parse JSON response
-        response_text = self._clean_json_response(response_text)
-        data = json.loads(response_text)
+        # Parse JSON response with robust fallback
+        data = self._try_parse_json_response(response_text, query)
         
         # Convert to SubQuery objects
         sub_queries = [
@@ -248,6 +252,105 @@ class QueryDecomposer:
             sub_queries=sub_queries,
             reasoning=data.get("reasoning", "")
         )
+    
+    def _try_parse_json_response(self, text: str, query: str) -> dict:
+        """
+        Try to parse JSON response with multiple fallback strategies.
+        
+        Strategies:
+        1. Direct JSON parse after cleaning markdown
+        2. Fix common JSON errors (unterminated strings, trailing commas)
+        3. Regex extraction of sub_queries
+        """
+        import re
+        
+        # Strategy 1: Clean and parse directly
+        cleaned = self._clean_json_response(text)
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            logger.debug(f"Direct JSON parse failed: {e}")
+        
+        # Strategy 2: Fix common JSON errors
+        fixed = self._fix_json_errors(cleaned)
+        try:
+            return json.loads(fixed)
+        except json.JSONDecodeError as e:
+            logger.debug(f"Fixed JSON parse failed: {e}")
+        
+        # Strategy 3: Regex extraction fallback
+        try:
+            return self._regex_extract_decomposition(text, query)
+        except Exception as e:
+            logger.debug(f"Regex extraction failed: {e}")
+        
+        # Final fallback: return minimal valid structure
+        logger.warning(f"All JSON parsing strategies failed for response: {text[:200]}...")
+        raise ValueError(f"Could not parse LLM response as JSON")
+    
+    @staticmethod
+    def _fix_json_errors(text: str) -> str:
+        """Fix common JSON errors from LLM responses."""
+        import re
+        
+        # Remove trailing commas before ] or }
+        text = re.sub(r',\s*([}\]])', r'\1', text)
+        
+        # Fix unterminated strings - try to close them at line boundaries
+        lines = text.split('\n')
+        fixed_lines = []
+        for line in lines:
+            # Count quotes
+            quote_count = line.count('"') - line.count('\\"')
+            if quote_count % 2 == 1:
+                # Odd number of quotes - try to fix
+                line = line.rstrip()
+                if not line.endswith('"'):
+                    line += '"'
+            fixed_lines.append(line)
+        text = '\n'.join(fixed_lines)
+        
+        return text
+    
+    def _regex_extract_decomposition(self, text: str, original_query: str) -> dict:
+        """Extract decomposition info using regex as last resort."""
+        import re
+        
+        # Try to extract sub_queries array
+        sub_queries = []
+        
+        # Pattern to match {"query": "...", "type": "...", "order": N}
+        pattern = r'\{"query"\s*:\s*"([^"]+)"\s*,\s*"type"\s*:\s*"([A-Z]+)"\s*,\s*"order"\s*:\s*(\d+)\}'
+        matches = re.findall(pattern, text)
+        
+        for match in matches:
+            sub_queries.append({
+                "query": match[0],
+                "type": match[1],
+                "order": int(match[2])
+            })
+        
+        if not sub_queries:
+            # Try simpler pattern
+            simple_pattern = r'"query"\s*:\s*"([^"]+)".*?"type"\s*:\s*"([A-Z]+)"'
+            matches = re.findall(simple_pattern, text, re.DOTALL)
+            for i, match in enumerate(matches):
+                sub_queries.append({
+                    "query": match[0],
+                    "type": match[1],
+                    "order": i + 1
+                })
+        
+        if sub_queries:
+            logger.info(f"Regex extracted {len(sub_queries)} sub-queries")
+            return {
+                "original_query": original_query,
+                "is_decomposed": len(sub_queries) > 1,
+                "sub_queries": sub_queries,
+                "reasoning": "Extracted via regex fallback"
+            }
+        
+        raise ValueError("No sub-queries found via regex")
     
     @staticmethod
     def _clean_json_response(text: str) -> str:

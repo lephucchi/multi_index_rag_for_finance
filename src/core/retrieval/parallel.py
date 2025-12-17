@@ -135,9 +135,9 @@ class SupabaseVectorDB:
         response = self._client.rpc(
             "match_documents",
             {
-                "query_embedding": embedding,
-                "match_count": k,
-                "table_name": table
+                "_query_embedding": embedding,
+                "_match_count": k,
+                "_table_name": table
             }
         ).execute()
         return response.data if response.data else []

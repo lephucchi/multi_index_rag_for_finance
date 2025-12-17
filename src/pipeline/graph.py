@@ -147,6 +147,7 @@ async def run_rag_pipeline_async(query: str) -> Dict[str, Any]:
 # Fallback for when langgraph is not installed
 def run_rag_pipeline_fallback(query: str) -> Dict[str, Any]:
     """Fallback pipeline without LangGraph."""
+    import asyncio
     from .nodes import generate_node as gen_node
     
     state = create_initial_state(query)
@@ -155,7 +156,10 @@ def run_rag_pipeline_fallback(query: str) -> Dict[str, Any]:
     state = route_node(state)
     if should_decompose(state):
         state = decompose_node(state)
-    state = retrieve_node(state)
+    
+    # retrieve_node is async, need to run it properly
+    state = asyncio.run(retrieve_node(state))
+    
     state = gen_node(state)
     
     return {
@@ -172,3 +176,4 @@ def run_rag_pipeline_fallback(query: str) -> Dict[str, Any]:
         "step_times": state["step_times"],
         "total_time_ms": state.get("total_time_ms", 0.0),
     }
+

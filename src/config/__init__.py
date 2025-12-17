@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+# Default constants
+# from .defaults import DEFAULT_GEMINI_MODEL
+
 # Re-export configs
 from .router_config import RouterConfig, DEFAULT_CONFIG, FAST_CONFIG, ACCURATE_CONFIG
 from .decomposition_config import DecomposerConfig, ClassifierConfig, QueryType
@@ -25,7 +28,7 @@ class Settings:
     
     # Gemini
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "models/gemini-2.0-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "")
     
     # Encoder
     ENCODER_MODEL: str = os.getenv("ENCODER_MODEL", "BAAI/bge-m3")
@@ -37,7 +40,7 @@ class Settings:
     @classmethod
     def validate(cls) -> bool:
         """Check if required settings are configured."""
-        required = [cls.SUPABASE_URL, cls.SUPABASE_KEY, cls.GEMINI_API_KEY]
+        required = [cls.SUPABASE_URL, cls.SUPABASE_KEY, cls.GEMINI_API_KEY, cls.GEMINI_MODEL]
         return all(required)
 
 
