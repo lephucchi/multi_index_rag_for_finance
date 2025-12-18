@@ -78,12 +78,34 @@ class GeminiLLM:
             temperature=temperature,
             max_output_tokens=max_tokens
         )
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=config
-        )
-        return response.text
+        
+        # Retry parameters
+        max_retries = 3
+        base_delay = 2.0
+        
+        for attempt in range(max_retries + 1):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=config
+                )
+                return response.text
+                
+            except Exception as e:
+                # Check for transient errors (503 Service Unavailable, 429 Too Many Requests)
+                error_str = str(e)
+                is_transient = "503" in error_str or "429" in error_str or "overloaded" in error_str.lower()
+                
+                if is_transient and attempt < max_retries:
+                    delay = base_delay * (2 ** attempt)  # Exponential backoff
+                    logger.warning(f"Gemini API error (attempt {attempt+1}/{max_retries+1}): {e}. Retrying in {delay}s...")
+                    time.sleep(delay)
+                else:
+                    # If not transient or out of retries, re-raise
+                    logger.error(f"Gemini API failed after {attempt+1} attempts: {e}")
+                    raise e
+        return ""
 
 
 class GroundedGenerator:

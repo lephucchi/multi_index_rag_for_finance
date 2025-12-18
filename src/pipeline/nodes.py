@@ -178,6 +178,16 @@ async def retrieve_node(state: RAGState) -> RAGState:
         # Ensure routes matches sub_queries length
         while len(routes) < len(sub_queries):
             routes.append(routes[0] if routes else "financial")
+            
+        # Coverage Check: Ensure all high-confidence router selections are queried
+        # This fixes the issue where decomposition misses an index that the router correctly identified
+        covered = set(routes)
+        unique_missing = [r for r in state["routes"] if r not in covered]
+        
+        for r in unique_missing:
+            logger.info(f"[COVERAGE] Adding missing route '{r}' with original query")
+            sub_queries.append(state["query"])
+            routes.append(r)
     
     # Translate queries for glossary index (Vietnamese -> English)
     translated_queries = []

@@ -59,10 +59,10 @@ class FusionConfig:
         if self.source_weights is None:
             # Use object.__setattr__ for frozen dataclass
             object.__setattr__(self, 'source_weights', {
-                "glossary": 1.2,   # Boost definitions
-                "legal": 1.0,
-                "financial": 1.0,
-                "news": 0.9
+                "glossary": 0.8,   # Lower priority for definitions
+                "legal": 1.1,      # Boost legal for compliance questions
+                "financial": 1.0,  # Standard priority
+                "news": 1.0        # Standard priority
             })
     
     def get_weight(self, source: str) -> float:

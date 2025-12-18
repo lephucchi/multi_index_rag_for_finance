@@ -9,12 +9,16 @@ Follows SOLID principles:
 import asyncio
 import time
 import logging
+import threading
 from typing import List, Dict, Optional, Tuple, Protocol
 from dataclasses import dataclass, field
 
 from src.config import RetrieverConfig, INDEX_TABLE_MAP
 
 logger = logging.getLogger(__name__)
+
+# Global lock for thread-safe encoder loading
+_encoder_lock = threading.Lock()
 
 # Optional imports
 try:
@@ -176,9 +180,12 @@ class ParallelRetriever:
     
     @property
     def encoder(self) -> EncoderProtocol:
-        """Lazy-load encoder."""
+        """Lazy-load encoder with thread safety."""
         if self._encoder is None and ENCODER_AVAILABLE:
-            self._encoder = SentenceTransformerEncoder(self.config.encoder_model)
+            with _encoder_lock:
+                # Double-check pattern to avoid race condition
+                if self._encoder is None:
+                    self._encoder = SentenceTransformerEncoder(self.config.encoder_model)
         return self._encoder
     
     @property
@@ -266,6 +273,11 @@ class ParallelRetriever:
         """
         start = time.time()
         k = k_per_index or self.config.k_per_index
+        
+        # Pre-load encoder and vector_db BEFORE parallel tasks
+        # This prevents multiple threads from trying to load the model simultaneously
+        _ = self.encoder
+        _ = self.vector_db
         
         # Create parallel tasks
         tasks = [

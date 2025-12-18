@@ -148,7 +148,7 @@ class ResultFusion:
     def _format_context(
         self,
         docs: List[RetrievedDocument],
-        max_chars: int = 500
+        max_chars: int = 2000
     ) -> str:
         """Format documents as LLM context."""
         parts = []
