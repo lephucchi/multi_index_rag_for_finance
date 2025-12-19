@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "is_decomposed": false,
+  "method": "fallback",
+  "reasoning": "Decomposition unavailable, using original query",
+  "sub_queries": [
+    {
+      "query": "Muon thanh lap cong ty xuat nhap khau xay dung o Viet Nam can dieu kien gi, va cho toi mot so doanh nghiep di truoc de tham khao?",
+      "type": "UNKNOWN",
+      "order": 1
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+[
+  {
+    "query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+    "success": false,
+    "error": "langgraph not installed"
+  }
+]

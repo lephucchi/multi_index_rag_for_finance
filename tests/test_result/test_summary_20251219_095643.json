@@ -1,0 +1,10 @@
+[
+  {
+    "query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+    "success": true,
+    "json_file": "C:\\uel\\multi_index_rag_for_finance\\tests\\test_result\\test_result_1_20251219_095643.json",
+    "md_file": "C:\\uel\\multi_index_rag_for_finance\\tests\\test_result\\answer_1_20251219_095643.md",
+    "total_time_ms": 35614.8738861084,
+    "facts_count": 0
+  }
+]

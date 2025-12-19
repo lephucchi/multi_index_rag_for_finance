@@ -1,8 +1,10 @@
 """
-Query Decomposer using LLM (Gemini).
+Query Decomposer using LLM (Gemini) with Structured Output.
 
 Decomposes complex queries into atomic sub-queries for better retrieval.
-Follows SOLID principles:
+Uses Gemini Structured Output Schema to ensure 100% valid JSON responses.
+
+SOLID Principles:
 - Single Responsibility: Only handles decomposition logic
 - Open/Closed: Extensible via config, closed for modification
 - Dependency Inversion: Depends on abstractions (config, classifier interface)
@@ -101,13 +103,68 @@ class DecompositionResult:
 class LLMClientProtocol(Protocol):
     """Protocol for LLM client (Dependency Inversion)."""
     
-    def generate(self, prompt: str) -> str:
-        """Generate response from prompt."""
+    def generate_structured(self, prompt: str) -> dict:
+        """Generate structured JSON response from prompt."""
         ...
 
 
-class GeminiClient:
-    """Gemini API client implementation."""
+def _build_decomposition_schema():
+    """Build Gemini schema for structured output."""
+    if not GEMINI_AVAILABLE:
+        return None
+    
+    # Schema for sub-query
+    sub_query_schema = types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "query": types.Schema(
+                type=types.Type.STRING,
+                description="Câu hỏi con, PHẢI giữ đầy đủ context để tìm kiếm độc lập"
+            ),
+            "query_type": types.Schema(
+                type=types.Type.STRING,
+                enum=["LEGAL", "FINANCIAL", "NEWS", "GLOSSARY"],
+                description="Loại index phù hợp nhất để tìm kiếm"
+            ),
+            "order": types.Schema(
+                type=types.Type.INTEGER,
+                description="Thứ tự thực hiện (1 = đầu tiên)"
+            ),
+        },
+        required=["query", "query_type", "order"]
+    )
+    
+    # Main decomposition schema
+    decomposition_schema = types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "is_decomposed": types.Schema(
+                type=types.Type.BOOLEAN,
+                description="True nếu câu hỏi được phân tách thành nhiều sub-queries"
+            ),
+            "sub_queries": types.Schema(
+                type=types.Type.ARRAY,
+                items=sub_query_schema,
+                description="Danh sách các câu hỏi con"
+            ),
+            "reasoning": types.Schema(
+                type=types.Type.STRING,
+                description="Giải thích ngắn gọn cách phân tách"
+            ),
+        },
+        required=["is_decomposed", "sub_queries", "reasoning"]
+    )
+    
+    return decomposition_schema
+
+
+class GeminiStructuredClient:
+    """
+    Gemini API client with Structured Output support.
+    
+    Uses response_mime_type="application/json" and response_schema
+    to force LLM to return valid JSON matching the schema.
+    """
     
     def __init__(self, model_name: str, api_key: Optional[str] = None):
         if not GEMINI_AVAILABLE:
@@ -119,18 +176,68 @@ class GeminiClient:
         
         self.client = genai.Client(api_key=api_key)
         self.model_name = model_name
+        self.schema = _build_decomposition_schema()
+        
+        # Config với Structured Output
         self.config = types.GenerateContentConfig(
             temperature=0.1,
-            max_output_tokens=1024
+            max_output_tokens=2048,
+            response_mime_type="application/json",
+            response_schema=self.schema
         )
     
-    def generate(self, prompt: str) -> str:
+    def generate_structured(self, prompt: str) -> dict:
+        """
+        Generate response and parse as JSON.
+        
+        Returns:
+            dict: Parsed JSON response matching schema
+        """
         response = self.client.models.generate_content(
             model=self.model_name,
             contents=prompt,
             config=self.config
         )
-        return response.text
+        
+        # With structured output, response.text is guaranteed valid JSON
+        return json.loads(response.text)
+
+
+# Decomposition prompt - optimized for structured output
+DECOMPOSITION_PROMPT = """Bạn là Query Decomposer chuyên phân tách câu hỏi phức tạp.
+
+NHIỆM VỤ: Phân tách câu hỏi thành các sub-queries độc lập.
+
+CÁC LOẠI INDEX:
+- LEGAL: Luật, quy định, điều kiện pháp lý, nghĩa vụ
+- FINANCIAL: Chỉ số tài chính, báo cáo, phân tích công ty
+- NEWS: Tin tức, xu hướng thị trường, sự kiện
+- GLOSSARY: Định nghĩa thuật ngữ, khái niệm
+
+QUY TẮC QUAN TRỌNG:
+1. Mỗi sub-query PHẢI giữ đầy đủ context để tìm kiếm độc lập
+2. KHÔNG dùng đại từ (nó, đó, này) - phải có subject rõ ràng
+3. Ưu tiên LEGAL cho câu hỏi về điều kiện, quy định
+4. Một sub-query CHỈ được gán MỘT query_type
+
+VÍ DỤ:
+Input: "ROE là gì và VNM có ROE bao nhiêu?"
+Output:
+- [GLOSSARY] "ROE (Return on Equity) là gì? Định nghĩa và cách tính"
+- [FINANCIAL] "Công ty Vinamilk (VNM) có chỉ số ROE là bao nhiêu?"
+
+VÍ DỤ 2:
+Input: "Muốn thành lập công ty xuất nhập khẩu cần điều kiện gì và cho tôi một số doanh nghiệp tham khảo?"
+Output:
+- [LEGAL] "Điều kiện pháp lý để thành lập công ty xuất nhập khẩu tại Việt Nam là gì?"
+- [FINANCIAL] "Các doanh nghiệp xuất nhập khẩu uy tín tại Việt Nam để tham khảo"
+
+---
+
+CÂU HỎI CẦN PHÂN TÁCH:
+{query}
+
+Hãy phân tách câu hỏi trên thành các sub-queries."""
 
 
 class QueryDecomposer:
@@ -139,7 +246,7 @@ class QueryDecomposer:
     
     Uses a two-stage approach:
     1. Fast classifier to detect if decomposition is needed
-    2. LLM (Gemini) for actual decomposition
+    2. LLM (Gemini) with Structured Output for decomposition
     
     Example:
         >>> decomposer = QueryDecomposer()
@@ -167,13 +274,14 @@ class QueryDecomposer:
             use_classifier: Whether to use classifier as first-pass filter
         """
         self.config = config or DecomposerConfig()
-        self.classifier = classifier if use_classifier else None
+        self.classifier = classifier or (QueryComplexityClassifier() if use_classifier else None)
         self.llm_client = llm_client
         
         # Lazy init LLM client if not provided
         if self.llm_client is None and GEMINI_AVAILABLE:
             try:
-                self.llm_client = GeminiClient(self.config.model_name)
+                self.llm_client = GeminiStructuredClient(self.config.model_name)
+                logger.info("Initialized Gemini Structured Output client")
             except (ImportError, ValueError) as e:
                 logger.warning(f"Could not initialize Gemini: {e}")
     
@@ -203,12 +311,12 @@ class QueryDecomposer:
                     method="classifier"
                 )
         
-        # Step 2: Use LLM for complex queries
+        # Step 2: Use LLM with Structured Output for complex queries
         if self.llm_client:
             try:
                 result = self._llm_decompose(query)
                 result.latency_ms = (time.time() - start) * 1000
-                result.method = "llm"
+                result.method = "llm_structured"
                 return result
             except Exception as e:
                 logger.warning(f"LLM decomposition failed: {e}")
@@ -224,143 +332,30 @@ class QueryDecomposer:
         )
     
     def _llm_decompose(self, query: str) -> DecompositionResult:
-        """Use LLM to decompose the query."""
-        from .prompts import build_few_shot_prompt
+        """Use LLM with Structured Output to decompose the query."""
+        prompt = DECOMPOSITION_PROMPT.format(query=query)
         
-        prompt = build_few_shot_prompt(query)
-        response_text = self.llm_client.generate(prompt)
-        
-        # Parse JSON response with robust fallback
-        data = self._try_parse_json_response(response_text, query)
+        # With Structured Output, this returns valid dict directly
+        data = self.llm_client.generate_structured(prompt)
         
         # Convert to SubQuery objects
-        sub_queries = [
-            SubQuery(
-                query=sq["query"],
-                query_type=sq.get("type", QueryType.UNKNOWN),
+        sub_queries = []
+        for i, sq in enumerate(data.get("sub_queries", [])[:self.config.max_sub_queries]):
+            sub_queries.append(SubQuery(
+                query=sq.get("query", query),
+                query_type=sq.get("query_type", QueryType.UNKNOWN),
                 order=sq.get("order", i + 1)
-            )
-            for i, sq in enumerate(data.get("sub_queries", [])[:self.config.max_sub_queries])
-        ]
+            ))
         
         if not sub_queries:
             sub_queries = [SubQuery(query=query)]
         
         return DecompositionResult(
-            original_query=data.get("original_query", query),
+            original_query=query,
             is_decomposed=data.get("is_decomposed", len(sub_queries) > 1),
             sub_queries=sub_queries,
             reasoning=data.get("reasoning", "")
         )
-    
-    def _try_parse_json_response(self, text: str, query: str) -> dict:
-        """
-        Try to parse JSON response with multiple fallback strategies.
-        
-        Strategies:
-        1. Direct JSON parse after cleaning markdown
-        2. Fix common JSON errors (unterminated strings, trailing commas)
-        3. Regex extraction of sub_queries
-        """
-        import re
-        
-        # Strategy 1: Clean and parse directly
-        cleaned = self._clean_json_response(text)
-        try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError as e:
-            logger.debug(f"Direct JSON parse failed: {e}")
-        
-        # Strategy 2: Fix common JSON errors
-        fixed = self._fix_json_errors(cleaned)
-        try:
-            return json.loads(fixed)
-        except json.JSONDecodeError as e:
-            logger.debug(f"Fixed JSON parse failed: {e}")
-        
-        # Strategy 3: Regex extraction fallback
-        try:
-            return self._regex_extract_decomposition(text, query)
-        except Exception as e:
-            logger.debug(f"Regex extraction failed: {e}")
-        
-        # Final fallback: return minimal valid structure
-        logger.warning(f"All JSON parsing strategies failed for response: {text[:200]}...")
-        raise ValueError(f"Could not parse LLM response as JSON")
-    
-    @staticmethod
-    def _fix_json_errors(text: str) -> str:
-        """Fix common JSON errors from LLM responses."""
-        import re
-        
-        # Remove trailing commas before ] or }
-        text = re.sub(r',\s*([}\]])', r'\1', text)
-        
-        # Fix unterminated strings - try to close them at line boundaries
-        lines = text.split('\n')
-        fixed_lines = []
-        for line in lines:
-            # Count quotes
-            quote_count = line.count('"') - line.count('\\"')
-            if quote_count % 2 == 1:
-                # Odd number of quotes - try to fix
-                line = line.rstrip()
-                if not line.endswith('"'):
-                    line += '"'
-            fixed_lines.append(line)
-        text = '\n'.join(fixed_lines)
-        
-        return text
-    
-    def _regex_extract_decomposition(self, text: str, original_query: str) -> dict:
-        """Extract decomposition info using regex as last resort."""
-        import re
-        
-        # Try to extract sub_queries array
-        sub_queries = []
-        
-        # Pattern to match {"query": "...", "type": "...", "order": N}
-        pattern = r'\{"query"\s*:\s*"([^"]+)"\s*,\s*"type"\s*:\s*"([A-Z]+)"\s*,\s*"order"\s*:\s*(\d+)\}'
-        matches = re.findall(pattern, text)
-        
-        for match in matches:
-            sub_queries.append({
-                "query": match[0],
-                "type": match[1],
-                "order": int(match[2])
-            })
-        
-        if not sub_queries:
-            # Try simpler pattern
-            simple_pattern = r'"query"\s*:\s*"([^"]+)".*?"type"\s*:\s*"([A-Z]+)"'
-            matches = re.findall(simple_pattern, text, re.DOTALL)
-            for i, match in enumerate(matches):
-                sub_queries.append({
-                    "query": match[0],
-                    "type": match[1],
-                    "order": i + 1
-                })
-        
-        if sub_queries:
-            logger.info(f"Regex extracted {len(sub_queries)} sub-queries")
-            return {
-                "original_query": original_query,
-                "is_decomposed": len(sub_queries) > 1,
-                "sub_queries": sub_queries,
-                "reasoning": "Extracted via regex fallback"
-            }
-        
-        raise ValueError("No sub-queries found via regex")
-    
-    @staticmethod
-    def _clean_json_response(text: str) -> str:
-        """Remove markdown code blocks from LLM response."""
-        text = text.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
-            text = "\n".join(lines)
-        return text
     
     def decompose_batch(self, queries: List[str]) -> List[DecompositionResult]:
         """Decompose multiple queries."""

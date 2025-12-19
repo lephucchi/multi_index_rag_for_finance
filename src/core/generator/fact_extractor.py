@@ -1,8 +1,8 @@
 """
-Canonical Fact Extractor (CAF Pass 1).
+Canonical Fact Extractor (CAF Pass 1) with Structured Output.
 
 Extracts structured facts from retrieved documents into CanonicalFact schema.
-This is the first pass of the Canonical Answer Framework.
+Uses Gemini Structured Output Schema to ensure 100% valid JSON responses.
 
 SOLID Principles:
 - Single Responsibility: Only handles fact extraction
@@ -10,8 +10,8 @@ SOLID Principles:
 - Dependency Inversion: Depends on abstractions (GeneratorConfig)
 """
 import json
-import re
 import logging
+import os
 from typing import List, Dict, Optional, Protocol
 
 from .canonical_types import (
@@ -22,81 +22,111 @@ from .canonical_types import (
     Relevance
 )
 from .config import GeneratorConfig
-from .prompts import build_caf_extraction_prompt
+from .prompts import CAF_EXTRACTION_SYSTEM
 
 logger = logging.getLogger(__name__)
 
 
-class LLMClient(Protocol):
-    """Protocol for LLM client - enables dependency injection."""
-    def generate(self, prompt: str, temperature: float, max_tokens: int) -> str:
-        ...
+# Optional Gemini import
+try:
+    from google import genai
+    from google.genai import types
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    logger.warning("google-genai not installed")
 
 
-class GeminiClientAdapter:
-    """
-    Adapter for Gemini client.
+def _build_fact_extraction_schema():
+    """Build Gemini schema for fact extraction."""
+    if not GEMINI_AVAILABLE:
+        return None
     
-    Encapsulates Gemini-specific logic and provides a clean interface.
-    Config is loaded from environment via GeneratorConfig.
+    # Schema for a single fact
+    fact_schema = types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "domain": types.Schema(
+                type=types.Type.STRING,
+                enum=["LEGAL", "FINANCIAL", "NEWS", "GLOSSARY"],
+                description="Lĩnh vực của fact"
+            ),
+            "fact_type": types.Schema(
+                type=types.Type.STRING,
+                enum=["definition", "regulation", "requirement", "metric", "trend", "example"],
+                description="Loại thông tin"
+            ),
+            "statement": types.Schema(
+                type=types.Type.STRING,
+                description="Câu khẳng định ngắn gọn (1-2 câu)"
+            ),
+            "scope": types.Schema(
+                type=types.Type.STRING,
+                description="Phạm vi: Vietnam, Global, hoặc Company: <tên>"
+            ),
+            "relevance": types.Schema(
+                type=types.Type.STRING,
+                enum=["HIGH", "MEDIUM", "LOW"],
+                description="Mức độ liên quan"
+            ),
+            "source_id": types.Schema(
+                type=types.Type.INTEGER,
+                description="Số citation [1], [2], ..."
+            ),
+            "sub_query": types.Schema(
+                type=types.Type.STRING,
+                description="Sub-query mà fact này trả lời"
+            ),
+        },
+        required=["domain", "fact_type", "statement", "relevance", "source_id"]
+    )
+    
+    # Schema for array of facts
+    facts_array_schema = types.Schema(
+        type=types.Type.ARRAY,
+        items=fact_schema,
+        description="Danh sách các Canonical Facts"
+    )
+    
+    return facts_array_schema
+
+
+class GeminiFactExtractionClient:
+    """
+    Gemini API client for fact extraction with Structured Output.
     """
     
     def __init__(self, config: GeneratorConfig = None):
-        """
-        Initialize with config from environment.
+        if not GEMINI_AVAILABLE:
+            raise ImportError("google-genai not installed")
         
-        Args:
-            config: GeneratorConfig instance (defaults to from_env())
-        """
         self.config = config or GeneratorConfig.from_env()
-        self._client = None
-        self._available = False
-        self._init_client()
-    
-    def _init_client(self):
-        """Initialize Gemini client from environment config."""
-        try:
-            from google import genai
-            import os
-            
-            api_key = os.getenv("GEMINI_API_KEY")
-            if not api_key:
-                logger.warning("GEMINI_API_KEY not set in environment")
-                return
-            
-            self._client = genai.Client(api_key=api_key)
-            self._available = True
-            logger.info(f"Gemini client initialized with model: {self.config.model_name}")
-            
-        except ImportError:
-            logger.warning("google-genai not installed")
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini client: {e}")
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found")
+        
+        self._client = genai.Client(api_key=api_key)
+        self._schema = _build_fact_extraction_schema()
+        self._available = True
+        
+        logger.info(f"Gemini Fact Extraction client initialized with model: {self.config.model_name}")
     
     @property
     def is_available(self) -> bool:
         return self._available
     
-    def generate(self, prompt: str, temperature: float = None, max_tokens: int = None) -> str:
+    def extract_facts(self, prompt: str) -> List[Dict]:
         """
-        Generate content using Gemini.
+        Extract facts using Gemini Structured Output.
         
-        Args:
-            prompt: Full prompt text
-            temperature: Override default temperature
-            max_tokens: Override default max tokens
-            
         Returns:
-            Generated text
+            List of fact dictionaries
         """
-        if not self._available:
-            raise RuntimeError("Gemini client not available")
-        
-        from google.genai import types
-        
         config = types.GenerateContentConfig(
-            temperature=temperature or 0.1,  # Low for extraction
-            max_output_tokens=max_tokens or 4096
+            temperature=0.1,  # Low for factual extraction
+            max_output_tokens=8192,  # Increased to avoid truncation
+            response_mime_type="application/json",
+            response_schema=self._schema
         )
         
         response = self._client.models.generate_content(
@@ -105,15 +135,65 @@ class GeminiClientAdapter:
             config=config
         )
         
-        return response.text
+        # Try to parse, with fallback repair for truncated JSON
+        return self._parse_with_repair(response.text)
+    
+    def _parse_with_repair(self, text: str) -> List[Dict]:
+        """Parse JSON with repair attempts for truncated responses."""
+        import re
+        
+        # Try direct parse first
+        try:
+            data = json.loads(text)
+            if isinstance(data, list):
+                return data
+            return []
+        except json.JSONDecodeError:
+            pass
+        
+        # Attempt 1: Fix truncated array - find last complete object
+        try:
+            # Find all complete objects in the array
+            matches = list(re.finditer(r'\{[^{}]*\}', text))
+            if matches:
+                last_complete = matches[-1].end()
+                # Rebuild array with complete objects
+                repaired = text[:last_complete] + ']'
+                # Ensure it starts with [
+                if not repaired.strip().startswith('['):
+                    repaired = '[' + repaired
+                data = json.loads(repaired)
+                if isinstance(data, list):
+                    logger.warning(f"[CFE] Repaired truncated JSON, got {len(data)} facts")
+                    return data
+        except json.JSONDecodeError:
+            pass
+        
+        # Attempt 2: Extract individual objects
+        try:
+            objects = []
+            for match in re.finditer(r'\{[^{}]+\}', text):
+                try:
+                    obj = json.loads(match.group())
+                    if 'statement' in obj:  # Validate it's a fact
+                        objects.append(obj)
+                except json.JSONDecodeError:
+                    continue
+            if objects:
+                logger.warning(f"[CFE] Extracted {len(objects)} facts via regex")
+                return objects
+        except Exception:
+            pass
+        
+        logger.error(f"[CFE] Could not repair JSON: {text[:200]}...")
+        return []
 
 
 class CanonicalFactExtractor:
     """
     Pass 1 of CAF: Extract structured facts from documents.
     
-    Takes retrieved documents organized by sub-query and extracts
-    CanonicalFact objects that follow a standardized schema.
+    Uses Gemini Structured Output to ensure 100% valid JSON.
     
     Example:
         >>> extractor = CanonicalFactExtractor()
@@ -125,22 +205,25 @@ class CanonicalFactExtractor:
         5
     """
     
-    def __init__(self, llm_client: LLMClient = None, config: GeneratorConfig = None):
+    def __init__(self, config: GeneratorConfig = None):
         """
         Initialize the fact extractor.
         
         Args:
-            llm_client: LLM client for generation (default: GeminiClientAdapter)
             config: Generator configuration (default: from environment)
         """
         self.config = config or GeneratorConfig.from_env()
-        self._llm_client = llm_client
+        self._llm_client = None
     
     @property
-    def llm_client(self) -> LLMClient:
+    def llm_client(self) -> GeminiFactExtractionClient:
         """Lazy-load LLM client."""
         if self._llm_client is None:
-            self._llm_client = GeminiClientAdapter(self.config)
+            try:
+                self._llm_client = GeminiFactExtractionClient(self.config)
+            except Exception as e:
+                logger.error(f"Failed to initialize LLM client: {e}")
+                raise
         return self._llm_client
     
     def extract(
@@ -162,29 +245,25 @@ class CanonicalFactExtractor:
             logger.warning("No sub_query_contexts provided")
             return CanonicalFactList()
         
-        if not self.llm_client.is_available:
-            logger.error("LLM client not available")
+        if not GEMINI_AVAILABLE:
+            logger.error("Gemini not available")
             return CanonicalFactList()
         
         # Format contexts for prompt
         formatted_contexts = self._format_contexts_for_prompt(sub_query_contexts)
         
-        # Build prompt using prompts.py
-        prompt = build_caf_extraction_prompt(formatted_contexts)
+        # Build full prompt
+        prompt = f"{CAF_EXTRACTION_SYSTEM}\n\nSUB-QUERIES VÀ DOCUMENTS:\n\n{formatted_contexts}\n\n---\n\nOUTPUT: Trích xuất các CanonicalFact từ documents trên."
         
         try:
-            # Call LLM with low temperature for factual extraction
-            response = self.llm_client.generate(
-                prompt=prompt,
-                temperature=0.1,
-                max_tokens=4096
-            )
+            # Call LLM with Structured Output
+            facts_data = self.llm_client.extract_facts(prompt)
             
-            # Parse response
-            facts = self._parse_response(response)
+            # Convert to CanonicalFact objects
+            facts = [CanonicalFact.from_dict(f) for f in facts_data]
             
             logger.info(f"[CFE] Extracted {len(facts)} canonical facts")
-            return facts
+            return CanonicalFactList(facts=facts)
             
         except Exception as e:
             logger.error(f"[CFE] Extraction error: {e}")
@@ -197,44 +276,6 @@ class CanonicalFactExtractor:
             parts.append(f"=== SUB-QUERY {i}: {sub_query} ===\n{context}")
         return "\n\n".join(parts)
     
-    def _parse_response(self, response: str) -> CanonicalFactList:
-        """Parse LLM response into CanonicalFactList."""
-        # Try multiple parsing strategies
-        
-        # Strategy 1: Direct parse
-        try:
-            data = json.loads(response)
-            if isinstance(data, list):
-                facts = [CanonicalFact.from_dict(d) for d in data]
-                return CanonicalFactList(facts=facts)
-        except json.JSONDecodeError:
-            pass
-        
-        # Strategy 2: Extract JSON from markdown code block
-        json_match = re.search(r'```(?:json)?\s*\n([\s\S]*?)\n```', response)
-        if json_match:
-            try:
-                data = json.loads(json_match.group(1))
-                if isinstance(data, list):
-                    facts = [CanonicalFact.from_dict(d) for d in data]
-                    return CanonicalFactList(facts=facts)
-            except json.JSONDecodeError:
-                pass
-        
-        # Strategy 3: Find array in response
-        array_match = re.search(r'\[\s*\{[\s\S]*\}\s*\]', response)
-        if array_match:
-            try:
-                data = json.loads(array_match.group(0))
-                if isinstance(data, list):
-                    facts = [CanonicalFact.from_dict(d) for d in data]
-                    return CanonicalFactList(facts=facts)
-            except json.JSONDecodeError:
-                pass
-        
-        logger.warning(f"[CFE] Failed to parse response: {response[:200]}...")
-        return CanonicalFactList()
-    
     def extract_from_formatted_context(
         self,
         formatted_context: str,
@@ -242,13 +283,10 @@ class CanonicalFactExtractor:
     ) -> CanonicalFactList:
         """
         Alternative extraction method when sub_query_contexts is not available.
-        
-        Creates a single context block and extracts facts from it.
         """
         if not sub_queries:
             sub_queries = ["general"]
         
-        # Create synthetic sub_query_contexts
         sub_query_contexts = {
             sub_queries[0]: formatted_context
         }

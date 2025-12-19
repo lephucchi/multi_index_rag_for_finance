@@ -1,0 +1,33 @@
+﻿============================================================
+TEST: QueryDecomposer with Gemini Structured Output
+============================================================
+python : Traceback (most recent 
+call last):
+At line:1 char:1
++ python tests/debug_decompose.py 
+2>&1 | Out-File -Encoding utf8 
+tests/ ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSp 
+   ecified: (Traceback (most recen  
+  t call last)::String) [], Remot   
+ eException
+    + FullyQualifiedErrorId : Nativ 
+   eCommandError
+ 
+  File "C:\uel\multi_index_rag_for_f
+inance\tests\debug_decompose.py", 
+line 16, in <module>
+    print(f"Query: {query}")
+  File "C:\Program Files\Python311\L
+ib\encodings\cp1252.py", line 19, 
+in encode
+    return codecs.charmap_encode(inp
+ut,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec 
+can't encode character '\u1ed1' in 
+position 9: character maps to 
+<undefined>

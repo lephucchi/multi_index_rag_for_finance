@@ -1,0 +1,65 @@
+{
+  "query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+  "answer": "## 1. Tổng quan\n\nKhông tìm thấy thông tin cụ thể trong cơ sở dữ liệu để trả lời câu hỏi: \"Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?\"\n\n## 4. Lưu ý & Giới hạn\n\nHệ thống không có đủ dữ liệu liên quan đến câu hỏi của bạn. Vui lòng:\n- Thử diễn đạt lại câu hỏi\n- Kiểm tra các thuật ngữ chính xác hơn\n- Liên hệ chuyên gia tư vấn nếu cần thông tin chi tiết",
+  "is_grounded": true,
+  "routes": [
+    "legal",
+    "news",
+    "financial",
+    "glossary"
+  ],
+  "sub_queries": [
+    "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?"
+  ],
+  "is_complex": false,
+  "citations": [],
+  "citations_map": [
+    {
+      "number": 1,
+      "source": "glossary",
+      "sub_query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+      "preview": "Copenhagen criteria (accession criteria): The criteria defined by the Copenhagen European Council in...",
+      "similarity": 0.3697
+    },
+    {
+      "number": 2,
+      "source": "glossary",
+      "sub_query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+      "preview": "HSBC until 1950: From its colonial cradle past the World Wars: Europe's largest bank by assets as of...",
+      "similarity": 0.3463
+    },
+    {
+      "number": 3,
+      "source": "glossary",
+      "sub_query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+      "preview": "Interpretable Machine Learning for Predicting Startup Funding, Patenting, and Exits: This study deve...",
+      "similarity": 0.3389
+    },
+    {
+      "number": 4,
+      "source": "glossary",
+      "sub_query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+      "preview": "common procedures: Procedures which apply to both SIs and LSIs. The common procedures enable the ECB...",
+      "similarity": 0.3359
+    },
+    {
+      "number": 5,
+      "source": "glossary",
+      "sub_query": "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?",
+      "preview": "convergence criteria: The four criteria set out in Article 140(1) TFEU that must be fulfilled by eac...",
+      "similarity": 0.3358
+    }
+  ],
+  "step_times": {
+    "route": 20063.24028968811,
+    "decompose": 838.3147716522217,
+    "retrieve": 13801.791906356812,
+    "extract_facts": 910.0701808929443,
+    "synthesize": 1.4567375183105469
+  },
+  "total_time_ms": 35614.8738861084,
+  "canonical_facts": [],
+  "sub_query_contexts": {
+    "Muốn thành lập công ty xuất nhập khẩu xây dựng ở Việt Nam cần điều kiện gì, và cho tôi một số doanh nghiệp đi trước để tham khảo?": "[1] (GLOSSARY) Copenhagen criteria (accession criteria): The criteria defined by the Copenhagen European Council in June 1993 (and confirmed by the Madrid European Council in December 1995) that must be fulfilled by any country wishing to join the European Union. Included are political criteria (stable institutions guaranteeing democracy, the rule of law, human rights and respect for minorities), economic criteria (a functioning market economy) and the incorporation into national law of the acquis communautaire (the EU's body of law).\n\n[2] (GLOSSARY) HSBC until 1950: From its colonial cradle past the World Wars: Europe's largest bank by assets as of 2025 started out in the 1860s in one of Europe's colonies: The Hongkong and Shanghai Banking Co (HSBC). Multiple wars forced Qing China and later the young Republic of China into a series of unequal treaties, one of which was the forced legalisation of the opium trade from parts of the British Empire into China, another was opening several cities, including Shanghai, for trade and granting extensive civil, property and business rights to non-residents and yet another was the annexation of Hong Kong by the United Kingdom. These are the conditions that created HSBC and in which it thrived, including from opium-related profits. During periods of relative calm, the bank grew geographically and made profits -- whether in moral or unethical, whether in legal or unlawful ways -- which helped HSBC weather the storms of civil and world wars. Other aspects contributed to HSBC's survival and success, such as its global nature, which allowed it to diversify and shift away from regions when danger emerges there and find shelter in safer havens. Yet the resilient survival abilities and the financial success of HSBC until 1950 should not distract from the fact that in addition to its tainted cradle and early profits from facilitating the poisoning of a whole society, its human resource system was also discrimination based, attempting to divide the one human race into different groups -- in spite of such practises being opposed to medical and biological facts. What is particularly interesting to see is that not only has HSBC yet to apologise for the early drug-related blood money it made: it even fails to mention its colonial, drug profits tainted past on any of its many history-themed pages sighted. Later sections contain possible reasons for HSBC's resilience and success, particularly interesting for entrepreneurs.\n\n[3] (GLOSSARY) Interpretable Machine Learning for Predicting Startup Funding, Patenting, and Exits: This study develops an interpretable machine learning framework to forecast startup outcomes, including funding, patenting, and exit. A firm-quarter panel for 2010-2023 is constructed from Crunchbase and matched to U.S. Patent and Trademark Office (USPTO) data. Three horizons are evaluated: next funding within 12 months, patent-stock growth within 24 months, and exit through an initial public offering (IPO) or acquisition within 36 months. Preprocessing is fit on a development window (2010-2019) and applied without change to later cohorts to avoid leakage. Class imbalance is addressed using inverse-prevalence weights and the Synthetic Minority Oversampling Technique for Nominal and Continuous features (SMOTE-NC). Logistic regression and tree ensembles, including Random Forest, XGBoost, LightGBM, and CatBoost, are compared using the area under the precision-recall curve (PR-AUC) and the area under the receiver operating characteristic curve (AUROC). Patent, funding, and exit predictions achieve AUROC values of 0.921, 0.817, and 0.872, providing transparent and reproducible rankings for innovation finance.\n\n[4] (GLOSSARY) common procedures: Procedures which apply to both SIs and LSIs. The common procedures enable the ECB to apply the single European rulebook in a consistent way. Common procedures include: granting a banking licence to a new company or extending an initial licence; authorising an acquisition of a participation in an existing institution; withdrawing a banking licence.\n\n[5] (GLOSSARY) convergence criteria: The four criteria set out in Article 140(1) TFEU that must be fulfilled by each EU Member State before it can adopt the euro, namely a stable price level, sound public finances (a deficit and a level of debt that are both limited in terms of GDP), a stable exchange rate and low and stable long-term interest rates. In addition, each EU Member State must ensure the compatibility of its national legislation, including the statutes of the national central bank, with both the TFEU and the Statute of the European System of Central Banks and of the European Central Bank."
+  }
+}
