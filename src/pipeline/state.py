@@ -1,5 +1,7 @@
 """
 LangGraph State Definition for RAG Pipeline.
+
+Updated for Canonical Answer Framework (CAF) - Step 8.
 """
 from typing import TypedDict, List, Optional, Dict, Any
 
@@ -9,6 +11,7 @@ class RAGState(TypedDict):
     State schema for the RAG pipeline.
     
     This state flows through all nodes in the graph.
+    Updated to support Canonical Answer Framework (CAF).
     """
     # Input
     query: str
@@ -27,7 +30,13 @@ class RAGState(TypedDict):
     formatted_context: str
     citations_map: List[Dict[str, Any]]
     
-    # Generation (Step 5)
+    # NEW: Sub-query organized contexts for CAF
+    sub_query_contexts: Dict[str, str]  # {sub_query: formatted_context}
+    
+    # NEW: Canonical Facts (CAF Pass 1 output)
+    canonical_facts: List[Dict[str, Any]]  # List of CanonicalFact dicts
+    
+    # Generation (CAF Pass 2 output)
     answer: str
     citations: List[Dict[str, Any]]
     is_grounded: bool
@@ -50,6 +59,8 @@ def create_initial_state(query: str) -> RAGState:
         contexts=[],
         formatted_context="",
         citations_map=[],
+        sub_query_contexts={},  # NEW for CAF
+        canonical_facts=[],      # NEW for CAF
         answer="",
         citations=[],
         is_grounded=False,

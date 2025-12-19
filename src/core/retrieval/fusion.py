@@ -3,8 +3,10 @@ Result fusion strategies for multi-index retrieval.
 
 Provides methods to merge and rank documents from multiple sources.
 Single Responsibility: Only handles fusion, not retrieval.
+
+Updated for Canonical Answer Framework (CAF) - Step 8.
 """
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
@@ -56,6 +58,7 @@ class ResultFusion:
     - weighted: Apply source-based weights to similarity scores
     - round_robin: Interleave documents from different sources
     - top_k: Simply take top-k by similarity
+    - format_by_sub_query: CAF-compatible formatting (NEW)
     
     Example:
         >>> fusion = ResultFusion()
@@ -177,3 +180,66 @@ class ResultFusion:
             }
             for i, doc in enumerate(docs, 1)
         ]
+    
+    def format_by_sub_query(
+        self,
+        sub_query_results: Dict[str, List[RetrievedDocument]],
+        max_docs_per_query: int = 5,
+        max_chars_per_doc: int = 2000
+    ) -> Tuple[Dict[str, str], List[dict]]:
+        """
+        Format contexts organized by sub-query for CAF.
+        
+        This method preserves the relationship between sub-queries and their
+        retrieved documents, which is essential for the Canonical Answer Framework.
+        
+        Args:
+            sub_query_results: Dict mapping sub-query -> list of documents
+            max_docs_per_query: Maximum documents per sub-query
+            max_chars_per_doc: Maximum characters per document
+            
+        Returns:
+            Tuple of (sub_query_contexts: Dict[str, str], citations: List[dict])
+            
+        Example:
+            >>> fusion = ResultFusion()
+            >>> contexts, citations = fusion.format_by_sub_query(
+            ...     {"ROE là gì": [doc1, doc2], "VNM có ROE bao nhiêu": [doc3, doc4]}
+            ... )
+            >>> print(contexts.keys())
+            dict_keys(['ROE là gì', 'VNM có ROE bao nhiêu'])
+        """
+        sub_query_contexts = {}
+        all_citations = []
+        citation_num = 1
+        
+        for sub_query, docs in sub_query_results.items():
+            if not docs:
+                continue
+                
+            # Take top docs for this sub-query
+            top_docs = sorted(docs, key=lambda x: -x.similarity)[:max_docs_per_query]
+            
+            parts = []
+            for doc in top_docs:
+                # Truncate content if needed
+                content = doc.content
+                if len(content) > max_chars_per_doc:
+                    content = content[:max_chars_per_doc] + "..."
+                
+                # Format with citation number
+                parts.append(f"[{citation_num}] ({doc.source_index.upper()}) {content}")
+                
+                # Add to citations list
+                all_citations.append({
+                    "number": citation_num,
+                    "source": doc.source_index,
+                    "sub_query": sub_query,
+                    "preview": doc.content[:100] + "..." if len(doc.content) > 100 else doc.content,
+                    "similarity": round(doc.similarity, 4),
+                })
+                citation_num += 1
+            
+            sub_query_contexts[sub_query] = "\n\n".join(parts)
+        
+        return sub_query_contexts, all_citations

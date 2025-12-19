@@ -3,6 +3,8 @@ LangGraph Node Functions for RAG Pipeline.
 
 Each node transforms the state and returns the updated state.
 With comprehensive logging for debugging and pipeline analysis.
+
+Updated for Canonical Answer Framework (CAF) - Step 8.
 """
 import time
 import logging
@@ -222,7 +224,7 @@ async def retrieve_node(state: RAGState) -> RAGState:
     if len(result.documents) > 5:
         logger.info(f"  ... and {len(result.documents) - 5} more documents")
     
-    # Fuse
+    # Fuse for original formatted_context
     fused = fusion.merge(result.documents)
     
     logger.info(f"[OUTPUT] After Fusion: {len(fused.documents)} documents")
@@ -232,6 +234,20 @@ async def retrieve_node(state: RAGState) -> RAGState:
     state["contexts"] = [doc.to_dict() for doc in fused.documents]
     state["formatted_context"] = fused.formatted_context
     state["citations_map"] = fused.citations
+    
+    # CAF: Also create sub_query_contexts using format_by_sub_query
+    # This preserves the relationship between sub-queries and documents for CFE
+    if result.sub_query_results:
+        sub_query_contexts, caf_citations = fusion.format_by_sub_query(result.sub_query_results)
+        state["sub_query_contexts"] = sub_query_contexts
+        # Update citations_map with sub_query info
+        state["citations_map"] = caf_citations
+        logger.info(f"[CAF] Sub-query contexts: {len(sub_query_contexts)} entries")
+    else:
+        # Fallback: create single context entry
+        state["sub_query_contexts"] = {state["query"]: fused.formatted_context}
+        logger.info("[CAF] Using fallback single context")
+    
     state["step_times"]["retrieve"] = (time.time() - start) * 1000
     
     logger.info(f"[TIME] Retrieve + Fusion: {state['step_times']['retrieve']:.2f}ms")
@@ -299,5 +315,3 @@ def should_decompose(state: RAGState) -> bool:
     logger.info(f"[CLASSIFY] Reason: {result.reason}")
     
     return result.is_complex
-
-

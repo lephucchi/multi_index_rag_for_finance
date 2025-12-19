@@ -76,10 +76,11 @@
 | 1 | Data Preprocessing | ✅ Hoàn thành |
 | 2 | Embedding & Indexing | ✅ Hoàn thành |
 | 3 | Semantic Router | ✅ Hoàn thành (100% accuracy) |
-| 4 | Query Decomposition & Parallel Retrieval | 🔄 Tiếp theo |
-| 5 | Grounded Generation | 📋 Planned |
-| 6 | MVP Development | 📋 Planned |
-| 7 | Evaluation & Deployment | 📋 Planned |
+| 4 | Query Decomposition & Parallel Retrieval | ✅ Hoàn thành |
+| 5 | Grounded Generation (LangGraph) | ✅ Hoàn thành |
+| 6 | FastAPI MVP | ✅ Hoàn thành |
+| 7 | Frontend Enhancement | ✅ Hoàn thành |
+| **8** | **Canonical Answer Framework (CAF)** | � Đang triển khai |
 
 ---
 
@@ -91,5 +92,5 @@
 
 ---
 
-*Cập nhật: 10/12/2024*
+*Cập nhật: 19/12/2024*
 

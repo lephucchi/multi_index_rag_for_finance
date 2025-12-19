@@ -117,9 +117,10 @@ graph TD
 |------|------------|-------|--------|
 | 1 | Semantic Router | Raw query | Routes, Scores |
 | 2 | Query Decomposition | Complex query | Sub-queries |
-| 3 | Parallel Retrieval | Sub-queries + Routes | Contexts |
-| 4 | Context Fusion | Multiple contexts | Merged context |
-| 5 | Grounded Generation | Query + Context | Cited answer |
+| 3 | Parallel Retrieval | Sub-queries + Routes | Per-sub-query contexts |
+| 4 | Context Fusion | Multiple contexts | Organized by sub-query |
+| 5 | **Canonical Fact Extraction** | Contexts | List[CanonicalFact] JSON |
+| 6 | **Canonical Answer Synthesis** | Facts + Query | Structured answer |
 
 ### 4.3. Công Nghệ Sử Dụng
 
@@ -196,15 +197,16 @@ news         0       0       0      30
 | 1 | Data Preprocessing | Thu thập và xử lý dữ liệu | 1.5M+ chunks |
 | 2 | Embedding & Indexing | Tạo vector indices | 4 indices ready |
 | 3 | Semantic Router | Định tuyến truy vấn | 100% accuracy |
+| 4 | Query Decomposition & Parallel Retrieval | Phân tách và truy vấn song song | ✅ Hoàn thành |
+| 5 | Grounded Generation | RAG pipeline với LangGraph | ✅ Hoàn thành |
+| 6 | FastAPI MVP | Backend API | ✅ Hoàn thành |
+| 7 | Frontend Enhancement | Next.js UI | ✅ Hoàn thành |
 
-### 6.2. Các Bước Cần Triển Khai 📋
+### 6.2. Đang Triển Khai 🔄
 
-| Step | Tên | Mô tả | Thời gian dự kiến |
-|------|-----|-------|-------------------|
-| 4 | Query Decomposition & Parallel Retrieval | Phân tách và truy vấn song song | 1 tuần |
-| 5 | Grounded Generation | RAG pipeline với LangGraph | 1.5 tuần |
-| 6 | MVP Development | Frontend + API hoàn chỉnh | 2 tuần |
-| 7 | Evaluation & Optimization | Testing và tối ưu | 1 tuần |
+| Step | Tên | Mô tả | Trạng thái |
+|------|-----|-------|------------|
+| 8 | **Canonical Answer Framework** | 2-pass prompting cho nhất quán | 🔄 Đang triển khai |
 
 ---
 

@@ -3,14 +3,22 @@ LangGraph State Graph Definition.
 
 This is the main entry point for the RAG pipeline.
 Full pipeline: Query → Route → Decompose → Retrieve → Generate → Answer
+
+Updated for Canonical Answer Framework (CAF) - Step 8.
+CAF uses 2-pass generation: Extract Facts → Synthesize Answer
 """
 import logging
+import os
 from typing import Dict, Any
 
 from .state import RAGState, create_initial_state
 from .nodes import (
     route_node, decompose_node, retrieve_node, generate_node,
     should_decompose
+)
+# CAF nodes
+from .caf_nodes import (
+    extract_facts_node, synthesize_answer_node, generate_node_caf
 )
 
 logger = logging.getLogger(__name__)
@@ -24,18 +32,31 @@ except ImportError:
     logger.warning("langgraph not installed. Install with: pip install langgraph")
 
 
-def build_rag_graph():
+# Feature flag for CAF - can be set via environment variable
+CAF_ENABLED = os.getenv("CAF_ENABLED", "true").lower() in ("true", "1", "yes")
+
+
+def build_rag_graph(use_caf: bool = None):
     """
     Build the RAG pipeline graph.
     
-    Flow:
+    Flow (Original):
         START → route → [decompose?] → retrieve → generate → END
+    
+    Flow (CAF):
+        START → route → [decompose?] → retrieve → extract_facts → synthesize → END
+    
+    Args:
+        use_caf: Override CAF_ENABLED setting (default: None uses env var)
     
     Returns:
         Compiled StateGraph ready for invocation.
     """
     if not LANGGRAPH_AVAILABLE:
         raise ImportError("langgraph not installed")
+    
+    # Determine whether to use CAF
+    enable_caf = use_caf if use_caf is not None else CAF_ENABLED
     
     # Create graph with state schema
     graph = StateGraph(RAGState)
@@ -44,7 +65,15 @@ def build_rag_graph():
     graph.add_node("route", route_node)
     graph.add_node("decompose", decompose_node)
     graph.add_node("retrieve", retrieve_node)
-    graph.add_node("generate", generate_node)
+    
+    if enable_caf:
+        # CAF: 2-pass generation
+        logger.info("Building RAG graph with CAF (2-pass generation)")
+        graph.add_node("generate", generate_node_caf)  # Combined CAF node
+    else:
+        # Original: 1-pass generation
+        logger.info("Building RAG graph with original generation")
+        graph.add_node("generate", generate_node)
     
     # Set entry point
     graph.set_entry_point("route")
@@ -70,24 +99,37 @@ def build_rag_graph():
 
 # Singleton instance
 _compiled_graph = None
+_graph_caf_enabled = None
 
 
-def get_rag_graph():
-    """Get or create the compiled RAG graph."""
-    global _compiled_graph
-    if _compiled_graph is None:
-        logger.info("Building RAG graph...")
-        _compiled_graph = build_rag_graph()
+def get_rag_graph(use_caf: bool = None):
+    """
+    Get or create the compiled RAG graph.
+    
+    Args:
+        use_caf: Override CAF_ENABLED setting (default: None uses env var)
+    """
+    global _compiled_graph, _graph_caf_enabled
+    
+    # Determine CAF setting
+    enable_caf = use_caf if use_caf is not None else CAF_ENABLED
+    
+    # Rebuild if CAF setting changed
+    if _compiled_graph is None or _graph_caf_enabled != enable_caf:
+        logger.info(f"Building RAG graph (CAF={enable_caf})...")
+        _compiled_graph = build_rag_graph(use_caf=enable_caf)
+        _graph_caf_enabled = enable_caf
         logger.info("RAG graph ready.")
     return _compiled_graph
 
 
-def run_rag_pipeline(query: str) -> Dict[str, Any]:
+def run_rag_pipeline(query: str, use_caf: bool = None) -> Dict[str, Any]:
     """
     Run a query through the full RAG pipeline (sync wrapper).
     
     Args:
         query: User question
+        use_caf: Override CAF_ENABLED setting
         
     Returns:
         Dict with answer, citations, and metadata
@@ -106,29 +148,30 @@ def run_rag_pipeline(query: str) -> Dict[str, Any]:
     except RuntimeError as e:
         if "no running event loop" in str(e).lower():
             # No running loop, safe to use asyncio.run()
-            return asyncio.run(run_rag_pipeline_async(query))
+            return asyncio.run(run_rag_pipeline_async(query, use_caf=use_caf))
         else:
             # Re-raise the error about wrong usage
             raise
 
 
-async def run_rag_pipeline_async(query: str) -> Dict[str, Any]:
+async def run_rag_pipeline_async(query: str, use_caf: bool = None) -> Dict[str, Any]:
     """
     Run a query through the full RAG pipeline (async version).
     
     Args:
         query: User question
+        use_caf: Override CAF_ENABLED setting
         
     Returns:
-        Dict with answer, citations, and metadata
+        Dict with answer, citations, and metadata (includes canonical_facts if CAF)
     """
-    graph = get_rag_graph()
+    graph = get_rag_graph(use_caf=use_caf)
     initial_state = create_initial_state(query)
     
     # Use ainvoke for async execution
     result = await graph.ainvoke(initial_state)
     
-    return {
+    response = {
         "query": result["query"],
         "answer": result["answer"],
         "is_grounded": result["is_grounded"],
@@ -142,13 +185,24 @@ async def run_rag_pipeline_async(query: str) -> Dict[str, Any]:
         "step_times": result["step_times"],
         "total_time_ms": result.get("total_time_ms", 0.0),
     }
+    
+    # Include CAF-specific fields if available
+    if "canonical_facts" in result and result["canonical_facts"]:
+        response["canonical_facts"] = result["canonical_facts"]
+    if "sub_query_contexts" in result and result["sub_query_contexts"]:
+        response["sub_query_contexts"] = result["sub_query_contexts"]
+    
+    return response
 
 
 # Fallback for when langgraph is not installed
-def run_rag_pipeline_fallback(query: str) -> Dict[str, Any]:
+def run_rag_pipeline_fallback(query: str, use_caf: bool = None) -> Dict[str, Any]:
     """Fallback pipeline without LangGraph."""
     import asyncio
-    from .nodes import generate_node as gen_node
+    
+    # Determine generation function
+    enable_caf = use_caf if use_caf is not None else CAF_ENABLED
+    gen_node = generate_node_caf if enable_caf else generate_node
     
     state = create_initial_state(query)
     
@@ -162,7 +216,7 @@ def run_rag_pipeline_fallback(query: str) -> Dict[str, Any]:
     
     state = gen_node(state)
     
-    return {
+    response = {
         "query": state["query"],
         "answer": state["answer"],
         "is_grounded": state["is_grounded"],
@@ -176,4 +230,8 @@ def run_rag_pipeline_fallback(query: str) -> Dict[str, Any]:
         "step_times": state["step_times"],
         "total_time_ms": state.get("total_time_ms", 0.0),
     }
-
+    
+    if enable_caf and "canonical_facts" in state:
+        response["canonical_facts"] = state["canonical_facts"]
+    
+    return response
