@@ -89,7 +89,7 @@ User Query
      │
      ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 2. QUERY DECOMPOSITION (Gemini 2.0 Flash)                   │
+│ 2. QUERY DECOMPOSITION (Gemini/OpenAI)                   │
 │    - Detect composite queries                               │
 │    - Split into atomic sub-queries                          │
 │    - Maintain dependencies                                  │
@@ -244,7 +244,7 @@ def build_rag_graph():
 
 | Thuộc tính | Giá trị |
 |------------|---------|
-| **Model** | Gemini 2.0 Flash |
+| **Model** | Gemini/OpenAI |
 | **Approach** | Least-to-Most Prompting |
 | **Max sub-queries** | 5 |
 | **Fallback** | Original query if decomposition fails |
@@ -264,7 +264,7 @@ def build_rag_graph():
 
 | Thuộc tính | Giá trị |
 |------------|---------|
-| **Model** | Gemini 2.0 Flash |
+| **Model** | Gemini/OpenAI |
 | **Context Window** | 1M tokens |
 | **Citation Format** | Inline [1], [2], ... |
 | **Grounding Threshold** | All claims must have source |
@@ -295,7 +295,7 @@ def build_rag_graph():
 | **Backend** | FastAPI | 0.100+ | REST/WebSocket API |
 | **Database** | Supabase | - | Vector storage |
 | **Cache** | Redis | 7.x | Query caching |
-| **LLM** | Gemini 2.0 Flash | - | Generation, Decomposition |
+| **LLM** | Gemini/OpenAI | - | Generation, Decomposition |
 | **Embeddings** | BAAI/bge-m3 | - | Query & Document encoding |
 
 ### 4.2. Python Dependencies

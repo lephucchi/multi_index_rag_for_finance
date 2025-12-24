@@ -55,7 +55,7 @@ This study adopts a system-oriented experimental methodology to investigate how 
 
 A comparative experimental design is employed, following evaluation principles commonly adopted in RAG system studies (Yu et al., 2024). The independent variables are the index organization strategy (Single vs Multi-Index) and the presence of semantic routing, while dependent variables include retrieval effectiveness, answer groundedness, citation accuracy, and system latency.
 
-All experimental systems share identical embedding models, retrieval depth (k=10), and generation configurations (Gemini 2.0 Flash, temp=0.0) to ensure controlled comparison. Evaluation is conducted using a **curated benchmark of 100 domain-specific queries** (see `docs/benchmark_queries.json`) spanning Vietnamese financial analysis, regulatory compliance, and market intelligence. The query set is multilingual, including Vietnamese, English, and Chinese, to reflect realistic FinTech usage scenarios in Vietnam.
+All experimental systems share identical embedding models, retrieval depth (k=10), and generation configurations (Gemini/OpenAI, temp=0.0) to ensure controlled comparison. Evaluation is conducted using a **curated benchmark of 100 domain-specific queries** (see `docs/benchmark_queries.json`) spanning Vietnamese financial analysis, regulatory compliance, and market intelligence. The query set is multilingual, including Vietnamese, English, and Chinese, to reflect realistic FinTech usage scenarios in Vietnam.
 *   **Source**: Synthesized by domain experts based on real-world queries from financial analysts and legal compliance officers.
 *   **Composition**: 40% Financial, 30% Legal, 20% News, 10% Glossary (Glossary queries often embedded within others).
 

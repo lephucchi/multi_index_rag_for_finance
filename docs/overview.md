@@ -1,6 +1,6 @@
 # A Semantic-Router Multi-Index Retrieval-Augmented Generation System for Vietnamese Financial Data and the Economic–Regulatory Framework
 
-> **Trạng thái**: Step 3 hoàn thành ✅ | Đang chuẩn bị Step 4
+> **Trạng thái**: Step 8 (CAF) 🔄 | Chuẩn bị Step 9 (External Search)
 
 ---
 
@@ -10,6 +10,7 @@
 - Sử dụng **Semantic Router** để tự động định tuyến truy vấn (đạt 100% accuracy)
 - Áp dụng **Query Decomposition** để xử lý truy vấn phức tạp
 - Tích hợp **LangGraph** cho pipeline orchestration
+- **External Search Fallback** (Google/DeepSearch) cho thông tin real-time
 - Tạo nền tảng cho MVP fintech hỗ trợ phân tích thị trường và compliance
 
 ---
@@ -17,32 +18,45 @@
 ## 2. Kiến Trúc Hệ Thống
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (Next.js)                           │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                │ REST/WebSocket
-                                ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      BACKEND (FastAPI)                               │
-│  ┌───────────────────────────────────────────────────────────────┐  │
-│  │                  LangGraph Orchestration                       │  │
-│  │                                                                │  │
-│  │  ┌──────────┐   ┌───────────┐   ┌─────────┐   ┌────────────┐  │  │
-│  │  │ Semantic │ → │  Query    │ → │Parallel │ → │  Grounded  │  │  │
-│  │  │  Router  │   │ Decompose │   │Retrieve │   │ Generation │  │  │
-│  │  └──────────┘   └───────────┘   └────┬────┘   └────────────┘  │  │
-│  │                                      │                         │  │
-│  │                                 ┌────▼─────┐                   │  │
-│  │                                 │ External │                   │  │
-│  │                                 │ Search   │                   │  │
-│  │                                 └──────────┘                   │  │
-│  └───────────────────────────────────────────────────────────────┘  │
-└──────────────────┬────────────────────┬─────────────────────────────┘
-                   │                    │
-    ┌──────────────▼──────┐   ┌─────────▼─────────┐
-    │ Supabase/pgvector   │   │  Gemini 2.0 Flash │
-    │   (4 Indices)       │   │     (LLM API)     │
-    └─────────────────────┘   └───────────────────┘
+                          ┌──────────────────────────────┐
+                          │      FRONTEND (Next.js)      │
+                          └───────────────┬──────────────┘
+                                          │ REST / WebSocket
+                                          ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       BACKEND (FastAPI + LangGraph)                          │
+│                                                                              │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────────────┐ │
+│  │ Semantic   │→ │ Query      │→ │ Parallel   │→ │ Grounded Generation    │ │
+│  │ Router     │  │ Decomposer │  │ Retriever  │  │ (CAF, Citations)       │ │
+│  └────────────┘  └────────────┘  └─────┬──────┘  └────────────────────────┘ │
+│                                        │                                     │
+│                             ┌──────────▼──────────┐                          │
+│                             │   Coverage Check    │                          │
+│                             │  (Confidence < 0.4) │                          │
+│                             └──────────┬──────────┘                          │
+│                        ┌───────────────┴────────────────┐                    │
+│                        │ YES                            │ NO                 │
+│                        ▼                                │                    │
+│         ┌──────────────────────────────────┐            │                    │
+│         │     External Search Fallback      │           │                    │
+│         │  ┌──────────────┐ ┌────────────┐ │            │                    │
+│         │  │ Google       │ │ DeepSearch │ │            │                    │
+│         │  │ Search API   │ │ (Tavily)   │ │            │                    │
+│         │  └──────────────┘ └────────────┘ │            │                    │
+│         └──────────────────────────────────┘            │                    │
+│                        │                                │                    │
+│                        └────────────────────────────────┘                    │
+│                                        ↓                                     │
+│                             ┌────────────────────┐                           │
+│                             │ Final Cited Answer │                           │
+│                             └────────────────────┘                           │
+└────────────────┬───────────────────────┬─────────────────────────────────────┘
+                 │                       │
+    ┌────────────▼───────┐     ┌─────────▼─────────┐
+    │ Supabase/pgvector  │     │  Gemini/OpenAI │
+    │   (4 Indices)      │     │     (LLM API)     │
+    └────────────────────┘     └───────────────────┘
 ```
 
 ---
@@ -64,14 +78,14 @@
 
 | Layer | Technology | Trạng thái |
 |-------|------------|------------|
-| **Orchestration** | LangGraph | 📋 Planned |
+| **Orchestration** | LangGraph | ✅ Implemented |
 | **Backend** | FastAPI | ✅ Ready |
 | **Database** | Supabase + pgvector | ✅ Ready |
 | **Embeddings** | BAAI/bge-m3 | ✅ Ready |
-| **LLM** | Gemini 2.0 Flash | 📋 Planned |
+| **LLM** | Gemini/OpenAI | ✅ Ready |
 | **Cache** | Redis | 📋 Planned |
-| **Frontend** | Next.js + TailwindCSS | 📋 Planned |
-| **Search** | Google / DeepSearch | 📋 Planned |
+| **Frontend** | Next.js + TailwindCSS | ✅ Ready |
+| **External Search** | Google API / Tavily | 📋 Planned |
 
 ---
 
@@ -87,6 +101,7 @@
 | 6 | FastAPI MVP | ✅ Hoàn thành |
 | 7 | Frontend Enhancement | ✅ Hoàn thành |
 | **8** | **Canonical Answer Framework (CAF)** | 🔄 Đang triển khai |
+| **9** | **External Knowledge Expansion (Google/DeepSearch)** | 📋 Planned |
 
 ---
 

@@ -129,7 +129,7 @@ Query → Route → Decompose → Retrieve (parallel) → Generate → Answer
 └────────────────┬───────────────────────┬─────────────────────────────────────┘
                  │                       │
     ┌────────────▼───────┐     ┌─────────▼─────────┐
-    │ Supabase/pgvector  │     │  Gemini 2.0 Flash │
+    │ Supabase/pgvector  │     │  Gemini/OpenAI │
     │   (4 Indices)      │     │     (LLM API)     │
     └────────────────────┘     └───────────────────┘
 ```
@@ -292,7 +292,7 @@ multi_index_rag_for_finance/
 | **Backend** | FastAPI |
 | **Database** | Supabase + pgvector |
 | **Embeddings** | BAAI/bge-m3 |
-| **LLM** | Gemini 2.0 Flash |
+| **LLM** | Gemini/OpenAI |
 | **Cache** | Redis |
 | **Frontend** | Next.js + TailwindCSS |
 | **Web Search** | Google Search / DeepSearch |
@@ -307,7 +307,7 @@ Contributions are welcome! Please read our contributing guidelines before submit
 
 ## 📄 License
 
-This project is part of the UEL Final Report 2024.
+This project is part of the UEL Final Report.
 
 ---
 
