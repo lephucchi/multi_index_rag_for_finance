@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "query": "ROE của Vinamilk năm 2023 là bao nhiêu?",
+    "domain": "FINANCIAL",
+    "complexity": "SIMPLE",
+    "notes": "Fact extraction from finance_index"
+  },
+  {
+    "id": 2,
+    "query": "Điều kiện niêm yết cổ phiếu trên sàn HOSE theo Luật Chứng khoán 2019",
+    "domain": "LEGAL",
+    "complexity": "SIMPLE",
+    "notes": "Retrieval from legal_index"
+  },
+  {
+    "id": 3,
+    "query": "EPS là gì và ý nghĩa của nó trong đầu tư",
+    "domain": "GLOSSARY",
+    "complexity": "SIMPLE",
+    "notes": "Definition lookup"
+  },
+  {
+    "id": 4,
+    "query": "Tin tức mới nhất về lãi suất điều hành của Ngân hàng Nhà nước",
+    "domain": "NEWS",
+    "complexity": "SIMPLE",
+    "notes": "Temporal retrieval from news_index"
+  },
+  {
+    "id": 5,
+    "query": "So sánh biên lợi nhuận gộp của HPG và HSG trong quý 4/2023",
+    "domain": "FINANCIAL",
+    "complexity": "COMPLEX",
+    "notes": "Multi-hop: Retrieve HPG, Retrieve HSG, Compare"
+  },
+  {
+    "id": 6,
+    "query": "Nghị định 65/2022 ảnh hưởng thế nào đến thị trường trái phiếu doanh nghiệp?",
+    "domain": "LEGAL-NEWS",
+    "complexity": "COMPLEX",
+    "notes": "Cross-domain: Legal content + News analysis"
+  },
+  {
+    "id": 7,
+    "query": "VinFast đã niêm yết trên sàn Nasdaq chưa?",
+    "domain": "NEWS",
+    "complexity": "SIMPLE",
+    "notes": "Fact check"
+  },
+  {
+    "id": 8,
+    "query": "Quy định về trích lập dự phòng rủi ro tín dụng của ngân hàng",
+    "domain": "LEGAL",
+    "complexity": "SIMPLE",
+    "notes": "Legal retrieval"
+  },
+  {
+    "id": 9,
+    "query": "Tỷ lệ nợ xấu của Vietcombank qua các năm gần đây",
+    "domain": "FINANCIAL",
+    "complexity": "COMPLEX",
+    "notes": "Time-series aggregation"
+  },
+  {
+    "id": 10,
+    "query": "Khái niệm 'nhà đầu tư chứng khoán chuyên nghiệp' theo luật mới nhất",
+    "domain": "LEGAL-GLOSSARY",
+    "complexity": "COMPLEX",
+    "notes": "Definition constrained by Law"
+  },
+  {
+    "id": 11,
+    "query": "Lợi nhuận sau thuế của FPT năm 2022 tăng trưởng bao nhiêu so với 2021?",
+    "domain": "FINANCIAL",
+    "complexity": "COMPLEX",
+    "notes": "Calculation required"
+  },
+  {
+    "id": 12,
+    "query": "Chủ tịch HĐQT của Masan Group là ai?",
+    "domain": "FINANCIAL",
+    "complexity": "SIMPLE",
+    "notes": "Entity attribute"
+  },
+  {
+    "id": 13,
+    "query": "Thị trường bất động sản quý 1/2024 có hồi phục không?",
+    "domain": "NEWS",
+    "complexity": "SIMPLE",
+    "notes": "Market sentiment"
+  },
+  {
+    "id": 14,
+    "query": "IPO là viết tắt của từ gì?",
+    "domain": "GLOSSARY",
+    "complexity": "SIMPLE",
+    "notes": "Definition"
+  },
+  {
+    "id": 15,
+    "query": "Các quỹ ETF lớn nhất tại Việt Nam hiện nay",
+    "domain": "NEWS-FINANCIAL",
+    "complexity": "SIMPLE",
+    "notes": "List generation"
+  },
+  {
+    "id": 16,
+    "query": "Thuế suất thuế thu nhập doanh nghiệp phổ thông là bao nhiêu?",
+    "domain": "LEGAL",
+    "complexity": "SIMPLE",
+    "notes": "Quantitative legal fact"
+  },
+  {
+    "id": 17,
+    "query": "Vốn hóa thị trường của Vingroup so với tổng GDP Việt Nam",
+    "domain": "FINANCIAL-NEWS",
+    "complexity": "COMPLEX",
+    "notes": "Cross-domain comparison"
+  },
+  {
+    "id": 18,
+    "query": "Lịch trả cổ tức của Vinamilk năm 2024",
+    "domain": "FINANCIAL-NEWS",
+    "complexity": "SIMPLE",
+    "notes": "Event retrieval"
+  },
+  {
+    "id": 19,
+    "query": "Phân tích rủi ro thanh khoản của Novaland dựa trên báo cáo tài chính gần nhất",
+    "domain": "FINANCIAL",
+    "complexity": "COMPLEX",
+    "notes": "Reasoning over financial data"
+  },
+  {
+    "id": 20,
+    "query": "Sự khác biệt giữa cổ phiếu thường và cổ phiếu ưu đãi",
+    "domain": "GLOSSARY-LEGAL",
+    "complexity": "SIMPLE",
+    "notes": "Conceptual comparison"
+  }
+]

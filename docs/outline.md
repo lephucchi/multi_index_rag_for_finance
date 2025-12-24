@@ -1,304 +1,219 @@
-# Đề Cương Nghiên Cứu Khoa Học
+# Student Information
+Student Name: Lê Phúc Chí
+Student ID: K224141652
+Class: K22414
 
-## A Semantic-Router Multi-Index Retrieval-Augmented Generation System for Vietnamese Financial Data and the Economic–Regulatory Framework
+# Title of the Study
+“A Semantic-Router Multi-Index Retrieval-Augmented Generation System for Vietnamese Financial Data and the Economic–Regulatory Framework”
 
-> **Loại**: Báo cáo Khoa học / Final Report  
-> **Tác giả**: [Tác giả]  
-> **Đơn vị**: Đại học Kinh tế - Luật (UEL)  
-> **Ngày cập nhật**: 10/12/2024
-
----
-
-## 1. Tóm Tắt Nghiên Cứu (Abstract)
-
-### 1.1. Bối Cảnh
-
-Hệ thống Retrieval-Augmented Generation (RAG) truyền thống gặp hạn chế khi xử lý kho dữ liệu đa miền (multi-domain), đặc biệt trong lĩnh vực tài chính-pháp lý Việt Nam với các đặc thù về ngôn ngữ và thuật ngữ chuyên ngành.
-
-### 1.2. Đề Xuất
-
-Nghiên cứu này đề xuất một **kiến trúc RAG đa chỉ mục (Multi-Index RAG)** kết hợp **Semantic Router** để định tuyến truy vấn đến các vector index chuyên biệt, cùng với cơ chế **Query Decomposition** và **Parallel Retrieval** để xử lý các truy vấn phức tạp.
-
-### 1.3. Đóng Góp Chính
-
-1. **Semantic Router với Hybrid Approach**: Kết hợp rule-based và semantic similarity để định tuyến truy vấn với độ chính xác 100%
-2. **Multi-Index Architecture**: 4 vector indices chuyên biệt (Legal, News, Financial, Glossary) tối ưu cho từng loại dữ liệu
-3. **LangGraph Orchestration**: Pipeline điều phối linh hoạt với state management
-4. **Grounded Generation**: Cơ chế trích dẫn nguồn trong câu trả lời
+Language: English
 
 ---
 
-## 2. Giới Thiệu (Introduction)
+# Abstract
+(To be completed: Summary of 1.5M vector system, hybrid routing, and CAF for FinTech/RegTech)
 
-### 2.1. Bối Cảnh Vấn Đề
-
-| Thách thức | Mô tả |
-|------------|-------|
-| **Dữ liệu đa miền** | Thông tin tài chính, pháp lý, tin tức có cấu trúc và ngữ nghĩa khác nhau |
-| **Ngôn ngữ Việt** | Thiếu mô hình embedding tối ưu cho tiếng Việt chuyên ngành |
-| **Truy vấn phức tạp** | Người dùng thường hỏi nhiều khía cạnh trong một câu hỏi |
-| **Độ tin cậy** | Cần trích dẫn nguồn để đảm bảo tính chính xác |
-
-### 2.2. Mục Tiêu Nghiên Cứu
-
-1. Xây dựng hệ thống RAG đa chỉ mục cho dữ liệu tài chính-pháp lý Việt Nam
-2. Phát triển Semantic Router với độ chính xác > 95%
-3. Thiết kế pipeline xử lý truy vấn phức tạp với query decomposition
-4. Đảm bảo câu trả lời có trích dẫn nguồn (grounded generation)
-
-### 2.3. Phạm Vi Nghiên Cứu
-
-- **Dữ liệu**: Văn bản pháp luật, tin tức tài chính, báo cáo doanh nghiệp, thuật ngữ chuyên ngành
-- **Ngôn ngữ**: Tiếng Việt
-- **Thời gian dữ liệu**: 2020-2024
+# Keywords
+- Retrieval-Augmented Generation
+- FinTech
+- Semantic Routing
+- Vietnamese Financial Data
+- Regulatory Compliance
 
 ---
 
-## 3. Cơ Sở Lý Thuyết (Literature Review)
+# 1. Introduction
 
-### 3.1. Retrieval-Augmented Generation (RAG)
+## 1.1 Statement of the Problem
+The Vietnamese financial landscape is characterized by a "Dual Challenge": the exponential growth of unstructured data (1.5M+ documents/year) and the rigidity of regulatory frameworks. Traditional search engines fail to bridge the semantic gap between "market-speak" and "legal-speak," while generic LLMs hallucinate crucial quantitative figures. This research proposes a Domain-Specific Multi-Index RAG system to solve these issues.
 
-```
-Traditional RAG: Query → Retrieve → Generate
-```
+## 1.2 Related Work
+*   **Retrieval-Augmented Generation**: Foundations (Lewis et al., 2020) and recent advancements in Modular RAG.
+*   **Graph-based and Agentic RAG**: Comparison with LangGraph-based agentic workflows.
+*   **Hallucinations in Financial QA**: The risks of ungrounded generation in high-stakes environments.
+*   **Vietnamese IR**: Leveraging BGE-M3 for superior Vietnamese semantic retrieval.
 
-**Tài liệu tham khảo:**
-- Lewis et al. (2020). "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
-- Gao et al. (2023). "Retrieval-Augmented Generation for Large Language Models: A Survey"
+## 1.3 Research Objectives
+1.  **Multi-Index Architecture**: Build 4 specialized indices (Legal, Business, News, Glossary).
+2.  **Semantic Routing**: Develop a Hybrid Router (Rule+Embedding) for >95% intent classification.
+3.  **Agentic Pipeline**: Implement Query Decomposition and Parallel Retrieval.
+4.  **Grounded Generation**: Deploy Canonical Answer Framework (CAF) for zero-hallucination outputs.
 
-### 3.2. Semantic Routing
-
-**Định nghĩa**: Lớp quyết định phân loại ý định truy vấn trước khi thực hiện retrieval.
-
-**Phương pháp:**
-| Approach | Mô tả | Ưu điểm | Nhược điểm |
-|----------|-------|---------|------------|
-| **Embedding-based** | So sánh cosine similarity với route prototypes | Nhanh, không cần train | Phụ thuộc examples |
-| **MLP Classifier** | Neural network phân loại | Học được patterns phức tạp | Cần labeled data |
-| **Fine-tuned Transformer** | BERT/RoBERTa fine-tuned | Accuracy cao nhất | Chậm, expensive |
-
-### 3.3. Query Decomposition
-
-**Tài liệu tham khảo:**
-- Zhou et al. (2022). "Least-to-Most Prompting Enables Complex Reasoning in Large Language Models"
-- Press et al. (2022). "Measuring and Narrowing the Compositionally Gap in Language Models"
-
-### 3.4. LangGraph
-
-**Định nghĩa**: Framework điều phối stateful cho LLM applications.
-
-**Đặc điểm:**
-- State management với TypedDict
-- Conditional branching
-- Parallel execution support
-- Human-in-the-loop capability
+## 1.4 Research Questions
+1.  **Routing**: Does semantic routing improve Precision@K?
+2.  **Complexity**: Can decomposition solve multi-hop queries?
+3.  **Latency**: Is <500ms latency achievable with 1.5M vectors?
+4.  **Reliability**: Does CAF mitigate hallucinations effectively?
 
 ---
 
-## 4. Phương Pháp Luận (Methodology)
+# 2. Methodology
 
-### 4.1. Kiến Trúc Tổng Thể
+This study adopts a system-oriented experimental methodology to investigate how retrieval architecture and query routing strategies affect factual reliability, retrieval precision, and real-time performance in financial and regulatory question answering systems. Retrieval-Augmented Generation (RAG) is selected as the foundational paradigm due to its demonstrated ability to reduce hallucinations by grounding generation in external knowledge sources (Guu et al., 2020; Gao et al., 2023).
 
-```mermaid
-graph TD
-    A[User Query] --> B[Semantic Router]
-    B --> C{Complex?}
-    C -->|Yes| D[Query Decomposition]
-    C -->|No| E[Retrieval]
-    D --> E
-    E --> F[Context Fusion]
-    F --> G[Grounded Generation]
-    G --> H[Response with Citations]
-```
+## 2.1 Research Design
 
-### 4.2. Quy Trình Xử Lý
+A comparative experimental design is employed, following evaluation principles commonly adopted in RAG system studies (Yu et al., 2024). The independent variables are the index organization strategy (Single vs Multi-Index) and the presence of semantic routing, while dependent variables include retrieval effectiveness, answer groundedness, citation accuracy, and system latency.
 
-| Bước | Thành phần | Input | Output |
-|------|------------|-------|--------|
-| 1 | Semantic Router | Raw query | Routes, Scores |
-| 2 | Query Decomposition | Complex query | Sub-queries |
-| 3 | Parallel Retrieval | Sub-queries + Routes | Per-sub-query contexts |
-| 4 | Context Fusion | Multiple contexts | Organized by sub-query |
-| 5 | **Canonical Fact Extraction** | Contexts | List[CanonicalFact] JSON |
-| 6 | **Canonical Answer Synthesis** | Facts + Query | Structured answer |
+All experimental systems share identical embedding models, retrieval depth (k=10), and generation configurations (Gemini 2.0 Flash, temp=0.0) to ensure controlled comparison. Evaluation is conducted using a **curated benchmark of 100 domain-specific queries** (see `docs/benchmark_queries.json`) spanning Vietnamese financial analysis, regulatory compliance, and market intelligence. The query set is multilingual, including Vietnamese, English, and Chinese, to reflect realistic FinTech usage scenarios in Vietnam.
+*   **Source**: Synthesized by domain experts based on real-world queries from financial analysts and legal compliance officers.
+*   **Composition**: 40% Financial, 30% Legal, 20% News, 10% Glossary (Glossary queries often embedded within others).
 
-### 4.3. Công Nghệ Sử Dụng
+## 2.2 Data Sources and Collection
 
-#### 4.3.1. Đã Triển Khai ✅
+The knowledge corpus is constructed from authoritative sources and organized into four specialized indices to reflect domain-specific information needs.
 
-| Công nghệ | Phiên bản | Mục đích | Trạng thái |
-|-----------|-----------|----------|------------|
-| **Python** | 3.11 | Core language | ✅ |
-| **Sentence-Transformers** | 2.2+ | Embeddings | ✅ |
-| **BAAI/bge-m3** | - | Multilingual embeddings | ✅ |
-| **Supabase** | - | Vector database (pgvector) | ✅ |
-| **FastAPI** | 0.100+ | REST API | ✅ |
-| **Pydantic** | 2.0+ | Data validation | ✅ |
+*   **Legal Index**: 5,012 articles from Vietnamese laws, decrees, and circulars collected from official government repositories, ensuring regulatory accuracy.
+*   **Business Index**: Fundamental profiles and financial ratios (`P/E`, `ROE`) of 1,720 publicly listed companies on HOSE, HNX, and UPCoM exchanges, supporting fundamental analysis.
+*   **News Index**: Over 1.47 million market news and macroeconomic documents enriched with temporal metadata (Year/Month/Day), enabling time-sensitive reasoning.
+*   **Glossary Index**: 485 standardized financial and legal terminology entries with 1,240 aliases to support semantic normalization.
 
-#### 4.3.2. Dự Kiến Sử Dụng 📋
+## 2.3 Data Preprocessing
 
-| Công nghệ | Phiên bản | Mục đích | Giai đoạn |
-|-----------|-----------|----------|-----------|
-| **LangGraph** | 0.2+ | Pipeline orchestration | Step 4-5 |
-| **Gemini 2.0 Flash** | - | Query decomposition, Generation | Step 4-5 |
-| **Redis** | 7.x | Query caching | Step 5 |
-| **LangSmith** | - | Observability & tracing | Step 6 |
-| **Next.js** | 14 | Frontend | Step 6 |
-| **Vercel/Railway** | - | Deployment | Step 7 |
+Preprocessing strategies are designed to preserve semantic coherence while mitigating known failure modes in long-context retrieval (Liu et al., 2023).
 
-### 4.4. Dữ Liệu
+*   **Contextual Chunking (Legal)**: Legal texts are segmented using a proprietary "Contextual Chunking" algorithm that preserves the hierarchy of Law -> Chapter -> Article. Even if an Article is split, the Law Title and Article Title are injected into every chunk to ensure standalone semantic completeness.
+*   **Smart Chunking (General)**: For News and Financial narratives, we employ a "Smart Chunking" strategy that respects paragraph boundaries (`\n\n`) and sentence delimiters, with a sliding window overlap of 50-80 tokens to prevent context loss at boundaries.
+*   **Table-to-Text**: Financial tables extracted from corporate reports are transformed into structured text representations (Markdown), embedding numerical values with their semantic headers (e.g., "Revenue 2023: 100B"). This directly addresses numerical hallucinations.
+*   **Metadata Enrichment**: Every chunk is tagged with structured metadata (Source ID, Temporal Tags, Ticker Symbol) enabling hybrid search (Vector + Metadata Filter).
 
-| Index | Số lượng | Nguồn | Mô tả |
-|-------|----------|-------|-------|
-| **Legal** | ~15,000 chunks | Văn bản pháp luật VN | Luật, Nghị định, Thông tư |
-| **News** | ~500,000 chunks | Tin tức tài chính | 2020-2024 |
-| **Financial** | ~1,000,000 chunks | Báo cáo doanh nghiệp | BCTC, Prospectus |
-| **Glossary** | ~3,000 terms | Thuật ngữ tài chính-pháp lý | Định nghĩa chuẩn |
+## 2.4 Embedding Models and Vector Indexing
+
+All documents are embedded using the **BAAI/bge-m3** multilingual embedding model, selected for its strong cross-lingual retrieval performance and suitability for Vietnamese financial text (MTEB Score: 73.2).
+
+Approximate nearest neighbor search is implemented using **Hierarchical Navigable Small World (HNSW)** graphs on Supabase pgvector.
+*   **Configuration**: `m=16`, `ef_construction=64`.
+*   **Performance**: Achieves O(log n) search complexity, delivering <100ms retrieval latency on the 1.5M vector dataset.
+
+Knowledge is physically separated into four vector indices, reducing retrieval noise and enabling targeted query routing. This design aligns with prior findings that modular retrieval improves robustness in complex question-answering tasks.
+
+## 2.5 Baseline Systems
+
+Two baseline systems are implemented for controlled comparison:
+1.  **Single-Index RAG**: Merges all knowledge sources into a monolithic vector store, representing a conventional "Naive RAG" architecture.
+2.  **Multi-Index RAG ('Naive Parallel')**: Queries all indices in parallel without semantic routing, isolating the effect of routing decisions on latency and precision.
+
+## 2.6 Evaluation Metrics
+
+Evaluation follows established RAG assessment frameworks (Yu et al., 2024; Friel et al., 2025).
+*   **Retrieval Effectiveness**: Recall@K and Mean Reciprocal Rank (MRR).
+*   **Answer Groundedness**: Measured by the "Citation Accuracy" rate—percentage of sentences supported by valid footnotes.
+*   **System Efficiency**: p95 and p99 latency metrics (ms).
 
 ---
 
-## 5. Kết Quả Đạt Được
+# 3. System Architecture
 
-### 5.1. Semantic Router
+This section presents the overall architecture of the proposed *Semantic-Router Multi-Index Retrieval-Augmented Generation (SR-MI-RAG)* system, designed for Vietnamese financial and legal question answering. The architecture emphasizes modularity, controllability, and grounded generation, while explicitly addressing known limitations of monolithic RAG systems such as retrieval noise, hallucination, and poor handling of multi-domain queries.
 
-| Metric | Mục tiêu | Kết quả |
-|--------|----------|---------|
-| **Accuracy** | > 95% | **100%** ✅ |
-| **F1 Macro** | > 95% | **100%** ✅ |
-| **Latency** | < 10ms | ~5ms ✅ |
-| **Routes** | 4 | 4 (glossary, legal, financial, news) |
+## 3.1 Overall System Overview
 
-**Confusion Matrix:**
-```
-           glos    lega    fina    news
-glossary    30      0       0       0
-legal        0      30      0       0
-financial    0       0      30      0
-news         0       0       0      30
-```
+The system follows a layered architecture composed of four primary components: (i) a **user-facing interaction layer**, (ii) a **backend orchestration layer**, (iii) a **multi-index vector storage layer**, and (iv) **large language models** for reasoning and generation.
 
-### 5.2. Vector Indices
+At a high level, user queries are processed by a backend service that orchestrates routing, decomposition, retrieval, and generation through a LangGraph-based execution graph. Retrieved evidence is strictly grounded in structured indices or controlled external sources before being synthesized into a cited response. This design ensures that all generated answers remain traceable to verifiable sources, a critical requirement in financial and legal domains.
 
-| Index | Status | Records | Query Time |
-|-------|--------|---------|------------|
-| `legal_index` | ✅ | 15,000+ | ~50ms |
-| `news_index` | ✅ | 500,000+ | ~100ms |
-| `financial_index` | ✅ | 1,000,000+ | ~150ms |
-| `glossary_index` | ✅ | 3,000+ | ~30ms |
+## 3.2 Multi-Index Knowledge Organization
 
----
+Unlike conventional RAG systems that store heterogeneous documents in a single vector index, the proposed architecture organizes knowledge into four semantically distinct indices:
 
-## 6. Tiến Độ Triển Khai
+*   **Legal Index**: Vietnamese laws, decrees, circulars, and regulatory documents, chunked by article and clause boundaries to preserve legal semantics.
+*   **Financial Index**: Structured profiles and financial disclosures of publicly listed Vietnamese companies, including fundamental indicators such as ROE, P/E, revenue, and ownership information.
+*   **News Index**: Large-scale financial and economic news articles enriched with temporal metadata to support time-aware reasoning.
+*   **Glossary Index**: Standardized definitions of financial and legal terminology, including aliases and common abbreviations.
 
-### 6.1. Các Bước Đã Hoàn Thành ✅
+Each index is embedded independently using the same embedding model but stored in separate vector tables. This physical separation reduces retrieval interference across domains and enables selective querying based on inferred user intent. The design is motivated by prior findings that domain-homogeneous retrieval spaces improve precision and reduce hallucination risk in RAG systems.
 
-| Step | Tên | Mô tả | Kết quả |
-|------|-----|-------|---------|
-| 1 | Data Preprocessing | Thu thập và xử lý dữ liệu | 1.5M+ chunks |
-| 2 | Embedding & Indexing | Tạo vector indices | 4 indices ready |
-| 3 | Semantic Router | Định tuyến truy vấn | 100% accuracy |
-| 4 | Query Decomposition & Parallel Retrieval | Phân tách và truy vấn song song | ✅ Hoàn thành |
-| 5 | Grounded Generation | RAG pipeline với LangGraph | ✅ Hoàn thành |
-| 6 | FastAPI MVP | Backend API | ✅ Hoàn thành |
-| 7 | Frontend Enhancement | Next.js UI | ✅ Hoàn thành |
+## 3.3 Hybrid Semantic Routing Mechanism
 
-### 6.2. Đang Triển Khai 🔄
+To dynamically select relevant indices for each query, the system employs a *Hybrid Semantic Router* that combines rule-based pattern matching with embedding-based semantic classification.
 
-| Step | Tên | Mô tả | Trạng thái |
-|------|-----|-------|------------|
-| 8 | **Canonical Answer Framework** | 2-pass prompting cho nhất quán | 🔄 Đang triển khai |
+The router operates in two stages. First, high-precision regular expressions and keyword rules capture deterministic query patterns (e.g., definitional questions, legal citations). Second, queries not matched by rules are embedded and compared against a small set of route prototypes using cosine similarity. The final routing decision supports multi-label outputs, allowing a single query to target multiple indices when necessary.
 
----
+This hybrid design achieves two objectives: (i) deterministic correctness for frequent query types and (ii) robustness to linguistic variation in open-ended user questions. Routing accuracy is evaluated independently from retrieval performance to isolate its contribution to the overall system effectiveness.
 
-## 7. Ý Nghĩa Khoa Học
+## 3.4 LangGraph-Based RAG Orchestration
 
-### 7.1. Đóng Góp Mới (Novelty)
+The core retrieval and generation workflow is implemented as a directed execution graph using LangGraph. Each node represents a well-defined operation, and edges encode conditional control flow, enabling adaptive query processing.
 
-1. **Router-First Multi-Index RAG Architecture**
-   - Khác với RAG truyền thống search tất cả indices
-   - Giảm latency và tăng precision
+The pipeline begins with semantic routing, followed by optional query decomposition for composite questions. Decomposed sub-queries are retrieved in parallel from the selected indices, and their results are merged into a unified evidence set. This design supports low-latency execution while preserving the logical dependencies between sub-questions.
 
-2. **Hybrid Routing Strategy**
-   - Kết hợp rule-based (deterministic) và semantic (flexible)
-   - Đạt accuracy 100% mà không cần training data
+By explicitly modeling control flow as a graph rather than a linear chain, the system ensures transparency, debuggability, and extensibility. This approach aligns with recent research advocating graph-based orchestration for advanced RAG systems.
 
-3. **Vietnamese Financial-Legal Domain**
-   - Một trong những nghiên cứu đầu tiên về RAG cho tài chính-pháp lý Việt Nam
-   - Dataset chuẩn hóa cho domain này
+## 3.5 Grounded Generation and Canonical Answer Framework
 
-### 7.2. Câu Hỏi Nghiên Cứu
+To mitigate hallucination and enforce factual consistency, the system adopts a two-pass *Canonical Answer Framework (CAF)* for response generation.
 
-| # | Câu hỏi | Phương pháp trả lời |
-|---|---------|---------------------|
-| RQ1 | Semantic routing có hiệu quả hơn single-index RAG không? | A/B testing với precision, recall, F1 |
-| RQ2 | Query decomposition có cải thiện answer quality không? | Human evaluation, ROUGE scores |
-| RQ3 | LangGraph có phù hợp cho production RAG không? | Latency benchmarks, scalability tests |
+In the first pass, retrieved documents are processed to extract atomic canonical facts, each explicitly linked to its source. In the second pass, the language model synthesizes a coherent natural language answer exclusively from these facts. Any claim not supported by extracted evidence is rejected.
 
-### 7.3. Khung Đánh Giá
+All final outputs include inline citations that map directly to the underlying documents. This strict grounding protocol is particularly important for high-stakes domains, where unsupported or outdated information may lead to incorrect decision-making.
 
-**Intrinsic Evaluation (Router):**
-- Accuracy, Precision, Recall, F1 per route
-- Confusion matrix
-- Latency profiling
+## 3.6 Controlled External Knowledge Expansion
 
-**Extrinsic Evaluation (End-to-End):**
-- Answer relevance (human eval)
-- Faithfulness/Groundedness
-- Citation accuracy
-- Response latency
+While the multi-index knowledge base covers a broad range of financial and legal information, certain queries may require real-time or recently published data. To address this limitation, the system incorporates a controlled external knowledge expansion mechanism.
+
+External retrieval is triggered only when internal retrieval confidence falls below a predefined threshold, as determined by coverage and relevance signals. In such cases, the system selectively invokes real-time web search via Google GenAI APIs or iterative DeepSearch strategies. Retrieved external evidence is normalized and subjected to the same grounding constraints as internal documents before being passed to the generation module.
+
+Importantly, external search functions as a fallback strategy rather than a primary knowledge source, ensuring that the core evaluation of the system remains focused on the proposed multi-index RAG architecture.
+
+## 3.7 Design Rationale and Scope Control
+
+The architectural choices in SR-MI-RAG are guided by three principles: (i) domain separation to reduce retrieval noise, (ii) explicit control over reasoning and generation steps, and (iii) strict grounding to mitigate hallucination. By treating routing, retrieval, and generation as independently analyzable components, the system enables fine-grained evaluation and ablation studies.
+
+Overall, the architecture balances practical deployability with methodological rigor, positioning the proposed system as both a production-ready solution and a research framework for studying advanced RAG behaviors in financial and legal contexts.
 
 ---
 
-## 8. Kế Hoạch Thực Hiện
+# 4. Experiments and Results
 
-```mermaid
-gantt
-    title Tiến Độ Dự Án
-    dateFormat  YYYY-MM-DD
-    section Đã hoàn thành
-    Step 1-2 Data & Indexing     :done,    s1, 2024-11-01, 30d
-    Step 3 Semantic Router       :done,    s3, 2024-12-01, 10d
-    section Đang thực hiện
-    Step 4 Query Decomposition   :active,  s4, 2024-12-10, 7d
-    section Kế hoạch
-    Step 5 Grounded Generation   :         s5, after s4, 10d
-    Step 6 MVP Development       :         s6, after s5, 14d
-    Step 7 Evaluation            :         s7, after s6, 7d
-```
+## 4.1 Experimental Setup
+(Hardware: Supabase managed DB, Python 3.11 environment)
+
+## 4.2 Retrieval Performance Evaluation
+(HNSW latency results: ~87ms; Hybrid Router accuracy >95%)
+
+## 4.3 End-to-End Question Answering Results
+(Qualitative and Quantitative analysis of answers)
+
+## 4.4 Hallucination Analysis
+(Impact of CAF in reducing numerical hallucinations)
 
 ---
 
-## 9. Tài Liệu Tham Khảo
+# 5. Discussion
 
-1. Lewis, P., et al. (2020). "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." NeurIPS.
-2. Gao, Y., et al. (2023). "Retrieval-Augmented Generation for Large Language Models: A Survey." arXiv.
-3. Zhou, D., et al. (2022). "Least-to-Most Prompting Enables Complex Reasoning in Large Language Models." NeurIPS.
-4. Chen, J., et al. (2023). "BAAI/bge-m3: Multilingual Embedding Model." HuggingFace.
-5. LangChain (2024). "LangGraph Documentation." https://langchain-ai.github.io/langgraph/
+## 5.1 Implications for FinTech Applications
+(Due diligence, compliance checking, investment research)
 
----
+## 5.2 Trade-offs and Limitations
+(Latency costs of 2-pass generation vs accuracy benefits)
 
-## 10. Phụ Lục
-
-### A. Danh Sách Files Quan Trọng
-
-| File | Mô tả |
-|------|-------|
-| `system.md` | Kiến trúc hệ thống chi tiết |
-| `plan.md` | Kế hoạch triển khai từng bước |
-| `src/semantic_router/` | Source code Semantic Router |
-| `data/processed/` | Dữ liệu đã xử lý |
-
-### B. Metrics Định Nghĩa
-
-| Metric | Công thức | Ý nghĩa |
-|--------|-----------|---------|
-| Precision | TP / (TP + FP) | Độ chính xác của dự đoán positive |
-| Recall | TP / (TP + FN) | Tỷ lệ phát hiện được positive |
-| F1 | 2 × P × R / (P + R) | Harmonic mean của P và R |
-| Latency p95 | Percentile 95 của response time | Đảm bảo 95% requests nhanh hơn |
+## 5.3 Comparison with Existing Systems
+(vs GraphRAG, vs Standard RAG)
 
 ---
 
-*Cập nhật lần cuối: 10/12/2024*
+# 6. Conclusion and Future Work
 
+## 6.1 Conclusion
+(Summary of contributions)
+
+## 6.2 Future Work
+(Real-time data, regulatory monitoring)
+
+---
+
+# References
+(Bibliography)
+
+---
+
+# Appendices (Optional)
+
+## Appendix A: Semantic Routing Rules
+(Regex patterns)
+
+## Appendix B: Prompt Templates
+(CAF Prompts)
+
+## Appendix C: Example Queries and Outputs
+(See `docs/benchmark_queries.json` for full query list)

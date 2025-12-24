@@ -81,6 +81,15 @@ Query → Route → Decompose → Retrieve (parallel) → Generate → Answer
 
 ---
 
+### Controlled External Search
+> Trusted fallback mechanism for real-time information
+
+- **Google Search Integration**: Automatically triggered when internal knowledge coverage is low.
+- **DeepSearch**: Iterative web research for complex, open-ended questions.
+- **Grounded Extensions**: External results are normalized and cited just like internal documents.
+
+---
+
 ## 🏗️ Architecture
 
 ```
@@ -94,6 +103,9 @@ Query → Route → Decompose → Retrieve (parallel) → Generate → Answer
 │  │              LangGraph Orchestration                 ││
 │  │                                                      ││
 │  │  [Router] → [Decomposer] → [Retriever] → [Generator]││
+│  │                              │                      ││
+│  │                              ▼                      ││
+│  │                   [External Search Fallback]        ││
 │  └─────────────────────────────────────────────────────┘│
 └────────────────┬─────────────────┬──────────────────────┘
                  │                 │
@@ -235,7 +247,7 @@ multi_index_rag_for_finance/
 - [x] **Step 4**: Query Decomposition & Parallel Retrieval ✅
 - [x] **Step 5**: Grounded Generation & LangGraph ✅
 - [x] **Step 6**: FastAPI Backend ✅
-- [ ] **Step 7**: Frontend Development
+- [x] **Step 7**: Frontend Development
 - [ ] **Step 8**: Evaluation & Deployment
 
 ---
@@ -263,6 +275,7 @@ multi_index_rag_for_finance/
 | **LLM** | Gemini 2.0 Flash |
 | **Cache** | Redis |
 | **Frontend** | Next.js + TailwindCSS |
+| **Web Search** | Google Search / DeepSearch |
 
 ---
 
@@ -281,9 +294,3 @@ This project is part of the UEL Final Report 2024.
 ## 📧 Contact
 
 For questions or feedback, please open an issue or contact the maintainers.
-
----
-
-<p align="center">
-  Built with ❤️ for Vietnamese Financial & Legal AI
-</p>

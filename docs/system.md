@@ -32,19 +32,24 @@
 │  │  └──────────┘    └──────────┘    └──────────┘    └──────────────┘  │  │
 │  │       ↓               ↓               ↓               ↓            │  │
 │  │  [Route Decision] [Sub-queries] [Context Fusion] [Cited Answer]    │  │
+│  │                                       ↑                            │  │
+│  │                                       │ (Fallback)                 │  │
+│  │                                  ┌──────────────┐                  │  │
+│  │                                  │ External     │                  │  │
+│  │                                  │ Search       │                  │  │
+│  │                                  └──────────────┘                  │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────┬────────────────────┬──────────────────────────────┘
                        │                    │
        ┌───────────────┼────────────────────┼───────────────┐
        ▼               ▼                    ▼               ▼
 ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐ ┌─────────────┐
-│  Supabase   │ │   Gemini    │ │     Redis       │ │  LangSmith  │
-│  (pgvector) │ │   2.0 Flash │ │    (Cache)      │ │ (Logging)   │
-│             │ │             │ │                 │ │             │
-│ 4 Indices:  │ │ - Decompose │ │ - Query cache   │ │ - Tracing   │
-│ - Legal     │ │ - Generate  │ │ - Rate limit    │ │ - Metrics   │
-│ - News      │ │ - Cite      │ │ - Session       │ │ - Debug     │
-│ - Financial │ │             │ │                 │ │             │
+│  Supabase   │ │   Gemini    │ │     Redis       │ │ Google/Deep │
+│  (pgvector) │ │   2.0 Flash │ │    (Cache)      │ │ Search API  │
+│ 4 Indices:  │ │             │ │                 │ │             │
+│ - Legal     │ │ - Decompose │ │ - Query cache   │ │ - Tracing   │
+│ - News      │ │ - Generate  │ │ - Rate limit    │ │ - Metrics   │
+│ - Financial │ │ - Cite      │ │ - Session       │ │ - Debug     │
 │ - Glossary  │ │             │ │                 │ │             │
 └─────────────┘ └─────────────┘ └─────────────────┘ └─────────────┘
 ```
@@ -74,19 +79,17 @@ User Query
      │
      ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 3. PARALLEL RETRIEVAL (Async + Supabase)                    │
-│    - Route each sub-query to selected indices               │
-│    - Execute searches in parallel (asyncio.gather)          │
-│    - Weighted result fusion                                 │
-│    Output: [Document1, Document2, ...] with similarities    │
+│ 3. PARALLEL RETRIEVAL & EXTERNAL SEARCH                     │
+│    - Route sub-queries to internal indices                  │
+│    - *Fallback*: Trigger Google Search if coverage low      │
+│    Output: [Document1, Document2, ...]                      │
 └─────────────────────────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ 4. GROUNDED GENERATION (Gemini + Citation)                  │
-│    - Construct grounded prompt with contexts                │
-│    - Enforce citation format [1], [2], ...                  │
-│    - Validate claims against sources                        │
+│    - Construct grounded prompt                              │
+│    - Validate claims against sources (Internal/External)    │
 │    Output: Answer with inline citations                     │
 └─────────────────────────────────────────────────────────────┘
      │

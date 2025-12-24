@@ -30,7 +30,12 @@
 │  │  ┌──────────┐   ┌───────────┐   ┌─────────┐   ┌────────────┐  │  │
 │  │  │ Semantic │ → │  Query    │ → │Parallel │ → │  Grounded  │  │  │
 │  │  │  Router  │   │ Decompose │   │Retrieve │   │ Generation │  │  │
-│  │  └──────────┘   └───────────┘   └─────────┘   └────────────┘  │  │
+│  │  └──────────┘   └───────────┘   └────┬────┘   └────────────┘  │  │
+│  │                                      │                         │  │
+│  │                                 ┌────▼─────┐                   │  │
+│  │                                 │ External │                   │  │
+│  │                                 │ Search   │                   │  │
+│  │                                 └──────────┘                   │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 └──────────────────┬────────────────────┬─────────────────────────────┘
                    │                    │
@@ -66,6 +71,7 @@
 | **LLM** | Gemini 2.0 Flash | 📋 Planned |
 | **Cache** | Redis | 📋 Planned |
 | **Frontend** | Next.js + TailwindCSS | 📋 Planned |
+| **Search** | Google / DeepSearch | 📋 Planned |
 
 ---
 
@@ -80,7 +86,7 @@
 | 5 | Grounded Generation (LangGraph) | ✅ Hoàn thành |
 | 6 | FastAPI MVP | ✅ Hoàn thành |
 | 7 | Frontend Enhancement | ✅ Hoàn thành |
-| **8** | **Canonical Answer Framework (CAF)** | � Đang triển khai |
+| **8** | **Canonical Answer Framework (CAF)** | 🔄 Đang triển khai |
 
 ---
 
@@ -89,8 +95,3 @@
 - **[system.md](./system.md)** - Kiến trúc hệ thống chi tiết
 - **[outline.md](./outline.md)** - Đề cương nghiên cứu khoa học
 - **[plan.md](./plan.md)** - Kế hoạch triển khai từng bước
-
----
-
-*Cập nhật: 19/12/2024*
-
