@@ -2265,6 +2265,75 @@ Xem file: [Step7_Optimize_System_Phase1.md](./plan/Step7_Optimize_System_Phase1.
 
 ---
 
+## BƯỚC 9: Controlled External Knowledge Expansion (Google & DeepSearch)
+
+### 🎯 Mục Tiêu Của Bước Này
+
+- Tích hợp **Google Search** làm cơ chế fallback khi dữ liệu nội bộ không đủ (low confidence/coverage).
+- Triển khai **DeepSearch** cho các câu hỏi nghiên cứu sâu cần tổng hợp từ nhiều nguồn web.
+- Đảm bảo tính nhất quán (grounding) cho dữ liệu từ web tương tự như dữ liệu nội bộ.
+
+### ✅ Điều Kiện Tiên Quyết
+
+- ✔ Hoàn thành Bước 5: Grounded Generation pipeline ổn định
+- ✔ Google Cloud Project với Custom Search API enabled
+- ✔ Tavily hoặc Serper API key (cho DeepSearch)
+
+### 🎁 Kết Quả Mong Đợi
+
+- ✅ **Smart Fallback Trigger**: Tự động detect khi internal retrieval thất bại (VD: sự kiện mới tuần này, công ty không có trong database)
+- ✅ **Google Search Node**: Agent thực hiện search, filter quảng cáo, và parse content sạch.
+- ✅ **DeepSearch Agent**: Agent thực hiện iterative search (search -> đọc -> search tiếp) cho complex topics.
+- ✅ **Unified Citation**: Web sources được trích dẫn chuẩn `[Title](URL)` trong câu trả lời.
+
+### 🛠 Tech Stack & Phân Tích
+
+| Công nghệ | Mục đích | Điểm mạnh |
+|-----------|----------|-----------|
+| **Google Custom Search API** | Fallback search | Chính xác, coverage rộng |
+| **Tavily AI** | Deep Research | Tối ưu cho LLM, trả về clean text |
+| **Trafilatura** | Web Scraper | Nhanh, loại bỏ boilerplate/ads tốt |
+| **LangGraph** | Orchestration | Debug được luồng search/fallback |
+
+### 📐 Thuật Toán & Logic
+
+#### 1. Fallback Trigger Logic
+```python
+def should_use_external_search(retrieved_docs, query_intent):
+    # 1. Coverage Check
+    if not retrieved_docs:
+        return True
+    
+    # 2. Relevance Score Check (using Reranker)
+    max_score = max(doc.score for doc in retrieved_docs)
+    if max_score < 0.4:  # Threshold TBD
+        return True
+        
+    # 3. Intent Check (Temporal)
+    if query_intent.has_temporal_keywords ("hôm nay", "mới nhất"):
+        return True
+        
+    return False
+```
+
+#### 2. DeepSearch Workflow (Iterative)
+```
+Input: "Phân tích tác động của chính sách thuế carbon lên các doanh nghiệp dệt may VN 2024"
+1. Decompose: ["Thuế carbon 2024 là gì", "Doanh nghiệp dệt may VN bị ảnh hưởng ra sao"]
+2. Search Loop:
+   - Search Q1 -> Read top 3 links -> Summarize
+   - Search Q2 -> Read top 3 links -> Summarize
+   - Reflection: "Đủ thông tin chưa?" -> Nếu chưa, generate follow-up query
+3. Synthesize: Tổng hợp báo cáo từ các summaries
+```
+
+### ⏱ Thời Gian Ước Tính
+
+- Google Search integration: 1-2 ngày
+- DeepSearch workflow (LangGraph): 3-4 ngày
+- Testing & Safety filters: 2 ngày
+- **Tổng**: ~1 tuần
+
 ## 🔗 Tài Liệu Tham Khảo Chính
 
 

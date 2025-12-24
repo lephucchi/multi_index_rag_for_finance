@@ -21,37 +21,56 @@
                                 │ WebSocket / REST API
                                 ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                           BACKEND API LAYER                               │
-│                              (FastAPI)                                    │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │                    LangGraph Orchestration                          │  │
-│  │                                                                     │  │
-│  │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────────┐  │  │
-│  │  │ Semantic │ →  │ Query    │ →  │ Parallel │ →  │ Grounded     │  │  │
-│  │  │ Router   │    │ Decomp.  │    │ Retrieval│    │ Generation   │  │  │
-│  │  └──────────┘    └──────────┘    └──────────┘    └──────────────┘  │  │
-│  │       ↓               ↓               ↓               ↓            │  │
-│  │  [Route Decision] [Sub-queries] [Context Fusion] [Cited Answer]    │  │
-│  │                                       ↑                            │  │
-│  │                                       │ (Fallback)                 │  │
-│  │                                  ┌──────────────┐                  │  │
-│  │                                  │ External     │                  │  │
-│  │                                  │ Search       │                  │  │
-│  │                                  └──────────────┘                  │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
+│                           BACKEND API LAYER (FastAPI)                     │
+│ ┌──────────────────────────────────────────────────────────────────────┐ │
+│ │                    LangGraph Orchestration (Main Flow)                │ │
+│ │                                                                       │ │
+│ │  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌─────────────────────┐│ │
+│ │  │ Semantic │ → │ Query    │ → │ Parallel │ → │ Grounded Generation ││ │
+│ │  │ Router   │   │ Decomp.  │   │ Retrieval│   │ (CAF 2-Pass)        ││ │
+│ │  └──────────┘   └──────────┘   └────┬─────┘   └─────────────────────┘│ │
+│ │                                     │                                 │ │
+│ │                          ┌──────────▼───────────┐                     │ │
+│ │                          │ Coverage Check       │                     │ │
+│ │                          │ (score < 0.4?)       │                     │ │
+│ │                          └──────────┬───────────┘                     │ │
+│ │                       ┌─────────────┴──────────────┐                  │ │
+│ │                       │ YES (Fallback)             │ NO               │ │
+│ │                       ▼                            │                  │ │
+│ │  ┌────────────────────────────────────────────┐    │                  │ │
+│ │  │         EXTERNAL SEARCH MODULE              │   │                  │ │
+│ │  │  ┌─────────────────┐  ┌──────────────────┐ │   │                  │ │
+│ │  │  │ Google Search   │  │ DeepSearch       │ │   │                  │ │
+│ │  │  │ (Quick Fallback)│  │ (Iterative       │ │   │                  │ │
+│ │  │  │                 │  │  Research Agent) │ │   │                  │ │
+│ │  │  └────────┬────────┘  └────────┬─────────┘ │   │                  │ │
+│ │  │           │                    │           │   │                  │ │
+│ │  │           ▼                    ▼           │   │                  │ │
+│ │  │       ┌───────────────────────────────┐    │   │                  │ │
+│ │  │       │ Web Scraper (Trafilatura)     │    │   │                  │ │
+│ │  │       └───────────────────────────────┘    │   │                  │ │
+│ │  └────────────────────────────────────────────┘   │                  │ │
+│ │                       │                           │                  │ │
+│ │                       └───────────────────────────┘                  │ │
+│ │                                   ↓ (Merged Context)                 │ │
+│ │                       ┌───────────────────────────┐                  │ │
+│ │                       │ Unified Citation & Answer │                  │ │
+│ │                       └───────────────────────────┘                  │ │
+│ └──────────────────────────────────────────────────────────────────────┘ │
 └──────────────────────┬────────────────────┬──────────────────────────────┘
                        │                    │
        ┌───────────────┼────────────────────┼───────────────┐
        ▼               ▼                    ▼               ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────────┐ ┌─────────────┐
-│  Supabase   │ │   Gemini    │ │     Redis       │ │ Google/Deep │
-│  (pgvector) │ │   2.0 Flash │ │    (Cache)      │ │ Search API  │
-│ 4 Indices:  │ │             │ │                 │ │             │
-│ - Legal     │ │ - Decompose │ │ - Query cache   │ │ - Tracing   │
-│ - News      │ │ - Generate  │ │ - Rate limit    │ │ - Metrics   │
-│ - Financial │ │ - Cite      │ │ - Session       │ │ - Debug     │
-│ - Glossary  │ │             │ │                 │ │             │
-└─────────────┘ └─────────────┘ └─────────────────┘ └─────────────┘
+┌─────────────┐ ┌─────────────┐ ┌─────────────────┐ ┌─────────────────────┐
+│  Supabase   │ │   Gemini    │ │     Redis       │ │ External APIs       │
+│  (pgvector) │ │  2.0 Flash  │ │    (Cache)      │ │ ─────────────────── │
+│ ─────────── │ │ ─────────── │ │ ─────────────── │ │ • Google Search API │
+│ 4 Indices:  │ │ • Decompose │ │ • Query cache   │ │ • Tavily AI         │
+│ • Legal     │ │ • Generate  │ │ • Rate limit    │ │ • Serper            │
+│ • News      │ │ • Cite      │ │ • Session       │ │                     │
+│ • Financial │ │             │ │                 │ │                     │
+│ • Glossary  │ │             │ │                 │ │                     │
+└─────────────┘ └─────────────┘ └─────────────────┘ └─────────────────────┘
 ```
 
 ### 1.2. Data Flow
@@ -249,6 +268,20 @@ def build_rag_graph():
 | **Context Window** | 1M tokens |
 | **Citation Format** | Inline [1], [2], ... |
 | **Grounding Threshold** | All claims must have source |
+
+### 3.5. External Knowledge Expansion (Planned)
+
+| Component | Technology | Trigger Condition |
+|-----------|------------|-------------------|
+| **Fallback Search** | Google Custom Search API | Internal retrieval score < 0.4 |
+| **Deep Research** | Tavily AI / Serper | Query is "complex analysis" & Internal coverage < 50% |
+| **Safety Filter** | Llama Guard | Pre-screening external content |
+
+**Workflow**:
+1. Check internal retrieval confidence.
+2. If low, call Google Search with query keywords.
+3. Scrape top 3 results using `trafilatura`.
+4. Inject external text into `Context` for Grounded Generation.
 
 ---
 
