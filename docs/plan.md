@@ -2265,74 +2265,453 @@ Xem file: [Step7_Optimize_System_Phase1.md](./plan/Step7_Optimize_System_Phase1.
 
 ---
 
-## BƯỚC 9: Controlled External Knowledge Expansion (Google & DeepSearch)
+## BƯỚC 9: Google Search Grounding Fallback Implementation
 
 ### 🎯 Mục Tiêu Của Bước Này
 
-- Tích hợp **Google Search** làm cơ chế fallback khi dữ liệu nội bộ không đủ (low confidence/coverage).
-- Triển khai **DeepSearch** cho các câu hỏi nghiên cứu sâu cần tổng hợp từ nhiều nguồn web.
-- Đảm bảo tính nhất quán (grounding) cho dữ liệu từ web tương tự như dữ liệu nội bộ.
+- Tích hợp **Google Search Grounding** vào pipeline RAG như cơ chế fallback khi dữ liệu từ Vector DB không đủ hoặc không liên quan.
+- Sử dụng **langchain-google-genai** với tính năng `google_search` tool binding để Gemini tự động truy cập web khi cần.
+- Đảm bảo câu trả lời từ web search được **grounded với citations** tương tự như dữ liệu nội bộ.
+- Giữ **latency chấp nhận được** (<3s thêm cho fallback).
 
 ### ✅ Điều Kiện Tiên Quyết
 
-- ✔ Hoàn thành Bước 5: Grounded Generation pipeline ổn định
-- ✔ Google Cloud Project với Custom Search API enabled
-- ✔ Tavily hoặc Serper API key (cho DeepSearch)
+- ✔ Hoàn thành Step 8: Canonical Answer Framework (CAF) hoạt động ổn định
+- ✔ `GEMINI_API_KEY` đã cấu hình trong `.env`
+- ✔ Package `langchain-google-genai>=2.0.0` đã cài đặt
+- ✔ LangGraph pipeline có khả năng conditional branching
 
 ### 🎁 Kết Quả Mong Đợi
 
-- ✅ **Smart Fallback Trigger**: Tự động detect khi internal retrieval thất bại (VD: sự kiện mới tuần này, công ty không có trong database)
-- ✅ **Google Search Node**: Agent thực hiện search, filter quảng cáo, và parse content sạch.
-- ✅ **DeepSearch Agent**: Agent thực hiện iterative search (search -> đọc -> search tiếp) cho complex topics.
-- ✅ **Unified Citation**: Web sources được trích dẫn chuẩn `[Title](URL)` trong câu trả lời.
+- ✅ **FallbackDecider Node**: Phân tích retrieval results và quyết định có cần web search không
+- ✅ **GoogleSearchNode**: Thực hiện grounded search qua Gemini + Google Search tool
+- ✅ **Merged Context Generator**: Kết hợp internal docs + web results vào unified context
+- ✅ **Unified Citation Format**: `[1] Internal: Document Title` vs `[2] Web: URL`
+- ✅ **Logging & Metrics**: Track fallback rate, web search latency, success rate
+
+---
 
 ### 🛠 Tech Stack & Phân Tích
 
-| Công nghệ | Mục đích | Điểm mạnh |
-|-----------|----------|-----------|
-| **Google Custom Search API** | Fallback search | Chính xác, coverage rộng |
-| **Tavily AI** | Deep Research | Tối ưu cho LLM, trả về clean text |
-| **Trafilatura** | Web Scraper | Nhanh, loại bỏ boilerplate/ads tốt |
-| **LangGraph** | Orchestration | Debug được luồng search/fallback |
+| Công nghệ | Mục đích | Lý do chọn |
+|-----------|----------|------------|
+| **langchain-google-genai** | Gemini + Google Search binding | Official integration, stable API |
+| **ChatGoogleGenerativeAI** | LLM wrapper với tool support | Native support for `google_search` tool |
+| **LangGraph** | Conditional fallback orchestration | Debug được, state management rõ ràng |
+| **Pydantic** | Schema cho FallbackDecision | Type safety, validation |
 
-### 📐 Thuật Toán & Logic
+---
 
-#### 1. Fallback Trigger Logic
+### 📐 Kiến Trúc Chi Tiết
+
+#### 1. Updated LangGraph Pipeline
+
+```
+                     ┌─────────────┐
+                     │   START     │
+                     └──────┬──────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │   route     │
+                     └──────┬──────┘
+                            │
+               ┌────────────┼────────────┐
+               │            │            │
+               ▼            │            ▼
+        ┌─────────────┐     │     ┌─────────────┐
+        │  decompose  │     │     │   retrieve  │
+        └──────┬──────┘     │     └──────┬──────┘
+               │            │            │
+               ▼            │            │
+        ┌─────────────┐     │            │
+        │  retrieve   │     │            │
+        └──────┬──────┘     │            │
+               │            │            │
+               └────────────┼────────────┘
+                            │
+                            ▼
+                   ┌────────────────┐
+                   │ fallback_check │  ◀── NEW NODE
+                   └────────┬───────┘
+                            │
+               ┌────────────┼────────────┐
+               │ LOW_CONFIDENCE         │ SUFFICIENT
+               ▼                        │
+        ┌─────────────────┐             │
+        │ google_search   │  ◀── NEW   │
+        │ _grounding      │             │
+        └────────┬────────┘             │
+                 │                      │
+                 └──────────────────────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │  generate   │
+                     └──────┬──────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │    END      │
+                     └─────────────┘
+```
+
+#### 2. Fallback Decision Logic
+
 ```python
-def should_use_external_search(retrieved_docs, query_intent):
-    # 1. Coverage Check
-    if not retrieved_docs:
-        return True
+from pydantic import BaseModel
+from typing import Literal
+
+class FallbackDecision(BaseModel):
+    should_fallback: bool
+    reason: Literal[
+        "NO_DOCS_RETRIEVED",
+        "LOW_RELEVANCE_SCORE", 
+        "TEMPORAL_QUERY",
+        "SUFFICIENT_COVERAGE"
+    ]
+    max_similarity_score: float
+    doc_count: int
+
+def decide_fallback(state: RAGState) -> FallbackDecision:
+    """Analyze retrieval results and decide if web search is needed."""
     
-    # 2. Relevance Score Check (using Reranker)
-    max_score = max(doc.score for doc in retrieved_docs)
-    if max_score < 0.4:  # Threshold TBD
-        return True
-        
-    # 3. Intent Check (Temporal)
-    if query_intent.has_temporal_keywords ("hôm nay", "mới nhất"):
-        return True
-        
-    return False
+    contexts = state.get("contexts", [])
+    query = state.get("query", "")
+    
+    # 1. No documents retrieved
+    if not contexts:
+        return FallbackDecision(
+            should_fallback=True,
+            reason="NO_DOCS_RETRIEVED",
+            max_similarity_score=0.0,
+            doc_count=0
+        )
+    
+    # 2. Check similarity scores
+    scores = [ctx.get("similarity", 0) for ctx in contexts]
+    max_score = max(scores) if scores else 0.0
+    
+    RELEVANCE_THRESHOLD = 0.45  # Tunable parameter
+    if max_score < RELEVANCE_THRESHOLD:
+        return FallbackDecision(
+            should_fallback=True,
+            reason="LOW_RELEVANCE_SCORE",
+            max_similarity_score=max_score,
+            doc_count=len(contexts)
+        )
+    
+    # 3. Temporal keywords detection
+    TEMPORAL_KEYWORDS = [
+        "hôm nay", "tuần này", "tháng này", "mới nhất", 
+        "gần đây", "hiện tại", "2024", "2025",
+        "today", "this week", "latest", "recent"
+    ]
+    query_lower = query.lower()
+    if any(kw in query_lower for kw in TEMPORAL_KEYWORDS):
+        # Only fallback if we don't have recent news
+        has_recent_news = any(
+            ctx.get("metadata", {}).get("source") == "news" 
+            for ctx in contexts
+        )
+        if not has_recent_news:
+            return FallbackDecision(
+                should_fallback=True,
+                reason="TEMPORAL_QUERY",
+                max_similarity_score=max_score,
+                doc_count=len(contexts)
+            )
+    
+    # 4. Sufficient coverage
+    return FallbackDecision(
+        should_fallback=False,
+        reason="SUFFICIENT_COVERAGE",
+        max_similarity_score=max_score,
+        doc_count=len(contexts)
+    )
 ```
 
-#### 2. DeepSearch Workflow (Iterative)
+#### 3. Google Search Grounding Node
+
+```python
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage
+
+def google_search_grounding_node(state: RAGState) -> dict:
+    """Execute grounded search using Gemini + Google Search tool."""
+    
+    query = state.get("query", "")
+    sub_queries = state.get("sub_queries", [query])
+    
+    # Initialize Gemini with Google Search tool
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash-exp",  # Or gemini-1.5-pro
+        temperature=0.0
+    )
+    
+    # Bind the google_search tool
+    llm_with_search = llm.bind_tools([{"google_search": {}}])
+    
+    # Construct search prompt
+    search_prompt = f"""
+    Bạn là trợ lý nghiên cứu tài chính. Hãy tìm kiếm thông tin mới nhất về:
+    
+    Query: {query}
+    
+    Yêu cầu:
+    1. Sử dụng Google Search để tìm thông tin chính xác
+    2. Ưu tiên nguồn uy tín: báo tài chính, trang chính phủ, công ty chứng khoán
+    3. Trích dẫn URL nguồn cho mỗi thông tin quan trọng
+    4. Tập trung vào dữ liệu số liệu cụ thể nếu có
+    
+    Trả về kết quả dưới dạng JSON:
+    {{
+        "findings": [
+            {{
+                "fact": "Thông tin tìm được",
+                "source_url": "https://...",
+                "source_title": "Tên nguồn"
+            }}
+        ],
+        "summary": "Tóm tắt ngắn gọn"
+    }}
+    """
+    
+    try:
+        response = llm_with_search.invoke([HumanMessage(content=search_prompt)])
+        
+        # Parse grounding metadata if available
+        web_contexts = []
+        if hasattr(response, 'additional_kwargs'):
+            grounding_metadata = response.additional_kwargs.get('grounding_metadata', {})
+            search_results = grounding_metadata.get('search_entry_point', {})
+            
+            # Extract web chunks as contexts
+            for chunk in grounding_metadata.get('grounding_chunks', []):
+                if 'web' in chunk:
+                    web_contexts.append({
+                        "content": chunk['web'].get('title', ''),
+                        "url": chunk['web'].get('uri', ''),
+                        "source": "web_search",
+                        "similarity": 0.9  # High confidence for direct search
+                    })
+        
+        # Fallback: parse from response content
+        if not web_contexts:
+            web_contexts.append({
+                "content": response.content,
+                "source": "web_search_synthesized",
+                "similarity": 0.85
+            })
+        
+        return {
+            "web_contexts": web_contexts,
+            "fallback_used": True,
+            "fallback_response": response.content
+        }
+        
+    except Exception as e:
+        logger.error(f"Google Search Grounding failed: {e}")
+        return {
+            "web_contexts": [],
+            "fallback_used": True,
+            "fallback_error": str(e)
+        }
 ```
-Input: "Phân tích tác động của chính sách thuế carbon lên các doanh nghiệp dệt may VN 2024"
-1. Decompose: ["Thuế carbon 2024 là gì", "Doanh nghiệp dệt may VN bị ảnh hưởng ra sao"]
-2. Search Loop:
-   - Search Q1 -> Read top 3 links -> Summarize
-   - Search Q2 -> Read top 3 links -> Summarize
-   - Reflection: "Đủ thông tin chưa?" -> Nếu chưa, generate follow-up query
-3. Synthesize: Tổng hợp báo cáo từ các summaries
+
+#### 4. Updated RAGState Schema
+
+```python
+from typing import TypedDict, List, Optional, Annotated
+import operator
+
+class RAGState(TypedDict):
+    # Input
+    query: str
+    
+    # Routing
+    routes: List[str]
+    route_scores: dict
+    
+    # Decomposition
+    sub_queries: List[str]
+    is_composite: bool
+    
+    # Retrieval (Internal)
+    contexts: Annotated[List[dict], operator.add]
+    
+    # Fallback (NEW)
+    fallback_decision: Optional[dict]  # FallbackDecision as dict
+    web_contexts: List[dict]           # Results from Google Search
+    fallback_used: bool
+    fallback_error: Optional[str]
+    
+    # Generation
+    answer: str
+    citations: List[dict]
+    
+    # Metadata
+    processing_time_ms: float
+    error: Optional[str]
 ```
+
+#### 5. Merged Context for Generation
+
+```python
+def merge_contexts_for_generation(state: RAGState) -> List[dict]:
+    """Combine internal and web contexts with unified citation format."""
+    
+    merged = []
+    citation_index = 1
+    
+    # Internal contexts first (higher trust)
+    for ctx in state.get("contexts", []):
+        merged.append({
+            "citation_id": citation_index,
+            "content": ctx.get("content", ""),
+            "source_type": "internal",
+            "source_label": f"[{citation_index}] {ctx.get('metadata', {}).get('title', 'Internal Document')}",
+            "similarity": ctx.get("similarity", 0)
+        })
+        citation_index += 1
+    
+    # Web contexts (clearly marked)
+    for web_ctx in state.get("web_contexts", []):
+        url = web_ctx.get("url", "")
+        merged.append({
+            "citation_id": citation_index,
+            "content": web_ctx.get("content", ""),
+            "source_type": "web",
+            "source_label": f"[{citation_index}] Web: {url}" if url else f"[{citation_index}] Web Search",
+            "similarity": web_ctx.get("similarity", 0)
+        })
+        citation_index += 1
+    
+    return merged
+```
+
+---
+
+### 📊 Metrics & Monitoring
+
+| Metric | Mô tả | Target |
+|--------|-------|--------|
+| `fallback_rate` | % queries triggering web search | < 20% |
+| `fallback_latency_p95` | Latency added by web search | < 3000ms |
+| `fallback_success_rate` | % fallbacks returning useful results | > 80% |
+| `web_citation_accuracy` | % web citations with valid URLs | 100% |
+
+```python
+# Logging example
+import structlog
+logger = structlog.get_logger()
+
+def log_fallback_decision(decision: FallbackDecision, query: str):
+    logger.info(
+        "fallback_decision",
+        query=query[:100],
+        should_fallback=decision.should_fallback,
+        reason=decision.reason,
+        max_score=decision.max_similarity_score,
+        doc_count=decision.doc_count
+    )
+```
+
+---
+
+### 🔧 Configuration
+
+```python
+# src/config/fallback_config.py
+
+class FallbackConfig:
+    # Thresholds
+    RELEVANCE_THRESHOLD: float = 0.45
+    MIN_DOCS_REQUIRED: int = 1
+    
+    # Temporal detection
+    TEMPORAL_KEYWORDS: list = [
+        "hôm nay", "tuần này", "tháng này", "mới nhất",
+        "gần đây", "hiện tại", "2024", "2025"
+    ]
+    
+    # Google Search settings
+    SEARCH_MODEL: str = "gemini-2.0-flash-exp"
+    SEARCH_TEMPERATURE: float = 0.0
+    MAX_SEARCH_RESULTS: int = 5
+    
+    # Safety
+    ENABLE_FALLBACK: bool = True  # Feature flag
+    FALLBACK_TIMEOUT_SECONDS: int = 10
+```
+
+---
+
+### 📝 File Changes Required
+
+| File | Thay đổi |
+|------|----------|
+| `src/config/fallback_config.py` | **[NEW]** Configuration cho fallback |
+| `src/core/fallback/decider.py` | **[NEW]** FallbackDecision logic |
+| `src/core/fallback/google_search.py` | **[NEW]** Google Search Grounding node |
+| `src/pipeline/state.py` | **[MODIFY]** Add fallback fields to RAGState |
+| `src/pipeline/nodes.py` | **[MODIFY]** Add fallback_check_node, google_search_node |
+| `src/pipeline/graph.py` | **[MODIFY]** Add conditional edge for fallback |
+| `requirements.txt` | **[MODIFY]** Ensure `langchain-google-genai>=2.0.0` |
+
+---
+
+### ✅ Verification Plan
+
+#### 1. Unit Tests
+```bash
+# Test fallback decision logic
+pytest tests/unit/test_fallback_decider.py -v
+
+# Test cases:
+# - Empty contexts → should_fallback=True
+# - Low similarity scores → should_fallback=True  
+# - Temporal keywords without news → should_fallback=True
+# - Sufficient coverage → should_fallback=False
+```
+
+#### 2. Integration Test
+```bash
+# Test full pipeline with fallback
+python -m pytest tests/integration/test_fallback_pipeline.py -v
+
+# Test query that should trigger fallback:
+# "VN-Index hôm nay biến động như thế nào?"
+```
+
+#### 3. Manual Verification
+```python
+# Run in Python REPL
+from src.pipeline import run_rag_pipeline
+
+# Query 1: Should use internal data (no fallback)
+result1 = run_rag_pipeline("ROE là gì?")
+assert result1.fallback_used == False
+
+# Query 2: Should trigger fallback (temporal, no recent news)
+result2 = run_rag_pipeline("Tin tức chứng khoán mới nhất hôm nay?")
+assert result2.fallback_used == True
+assert len(result2.web_contexts) > 0
+```
+
+---
 
 ### ⏱ Thời Gian Ước Tính
 
-- Google Search integration: 1-2 ngày
-- DeepSearch workflow (LangGraph): 3-4 ngày
-- Testing & Safety filters: 2 ngày
-- **Tổng**: ~1 tuần
+| Task | Thời gian |
+|------|-----------|
+| Setup `fallback_config.py` | 0.5 ngày |
+| Implement `FallbackDecider` | 1 ngày |
+| Implement `GoogleSearchNode` | 1.5 ngày |
+| Update LangGraph pipeline | 1 ngày |
+| Unit tests | 1 ngày |
+| Integration testing & tuning | 1 ngày |
+| **Tổng** | **~6 ngày** |
 
 ## 🔗 Tài Liệu Tham Khảo Chính
 

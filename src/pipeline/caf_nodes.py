@@ -67,6 +67,24 @@ def extract_facts_node(state: RAGState) -> RAGState:
     # Get sub_query_contexts if available, otherwise use formatted_context
     sub_query_contexts = state.get("sub_query_contexts", {})
     
+    # IMPORTANT: If fallback was used, include web contexts in the extraction
+    if state.get("fallback_used") and state.get("web_contexts"):
+        web_contexts = state.get("web_contexts", [])
+        logger.info(f"[FALLBACK] Including {len(web_contexts)} web contexts in extraction")
+        
+        # Create a formatted context from web results
+        web_context_text = ""
+        for i, ctx in enumerate(web_contexts, 1):
+            content = ctx.get("content", "")
+            url = ctx.get("url", "Web Search")
+            if content:
+                web_context_text += f"\n[Web {i}] ({url}): {content}\n"
+        
+        # Add web context as a separate sub-query entry
+        if web_context_text:
+            sub_query_contexts["[Web Search Results]"] = web_context_text
+            logger.info(f"[FALLBACK] Added web context ({len(web_context_text)} chars)")
+    
     if not sub_query_contexts and state.get("formatted_context"):
         # Fallback: create single context from formatted_context
         sub_queries = state.get("sub_queries", [state["query"]])
@@ -180,14 +198,82 @@ def synthesize_answer_node(state: RAGState) -> RAGState:
     return state
 
 
+def _format_web_answer(state: RAGState) -> str:
+    """
+    Format answer directly from web search results.
+    Used for simple temporal queries where web data is sufficient.
+    """
+    web_contexts = state.get("web_contexts", [])
+    query = state.get("query", "")
+    
+    # Build answer from web contexts
+    facts = []
+    for ctx in web_contexts:
+        content = ctx.get("content", "")
+        if content:
+            facts.append(content)
+    
+    if not facts:
+        return None
+    
+    # Create simple, direct answer
+    answer_parts = []
+    for i, fact in enumerate(facts[:5], 1):  # Limit to 5 facts
+        answer_parts.append(f"{fact} [Web {i}]")
+    
+    return " ".join(answer_parts)
+
+
 def generate_node_caf(state: RAGState) -> RAGState:
     """
     CAF-enabled generation node (combines extract + synthesize).
     
     This is a convenience node that runs both CAF passes in sequence.
     Use this as a drop-in replacement for generate_node in the graph.
+    
+    FAST PATH: For simple queries with good web data, skip CAF and use web directly.
     """
+    import time
+    start_total = time.time()
+    
     _log_separator("CAF GENERATION (2-PASS)")
+    
+    # FAST PATH: If fallback was used with good web data for simple query,
+    # use web data directly instead of complex CAF pipeline
+    is_simple = not state.get("is_complex", False)
+    has_web_data = state.get("fallback_used") and state.get("web_contexts")
+    
+    if is_simple and has_web_data:
+        web_contexts = state.get("web_contexts", [])
+        if len(web_contexts) >= 1:
+            logger.info("[FAST PATH] Simple query with web data - using direct answer")
+            
+            # Format answer directly from web data
+            web_answer = _format_web_answer(state)
+            
+            if web_answer:
+                state["answer"] = web_answer
+                state["is_grounded"] = True
+                state["citations"] = [{"number": f"Web {i}", "used": True} for i in range(1, min(len(web_contexts), 6))]
+                state["step_times"]["extract_facts"] = 0.0
+                state["step_times"]["synthesize"] = (time.time() - start_total) * 1000
+                state["total_time_ms"] = sum(state["step_times"].values())
+                
+                logger.info(f"[OUTPUT] Answer Length: {len(web_answer)} chars")
+                logger.info(f"[OUTPUT] Answer Preview: {_truncate(web_answer, 300)}")
+                
+                # Final summary
+                _log_separator("CAF PIPELINE SUMMARY (FAST PATH)")
+                logger.info(f"Total Time: {state['total_time_ms']:.2f}ms")
+                logger.info("Time Breakdown:")
+                for step, time_ms in state["step_times"].items():
+                    pct = (time_ms / state["total_time_ms"] * 100) if state["total_time_ms"] > 0 else 0
+                    logger.info(f"  - {step:15s}: {time_ms:8.2f}ms ({pct:5.1f}%)")
+                
+                return state
+    
+    # STANDARD PATH: Full CAF 2-pass for complex queries
+    logger.info("[STANDARD PATH] Using full CAF 2-pass generation")
     
     # Pass 1: Extract facts
     state = extract_facts_node(state)

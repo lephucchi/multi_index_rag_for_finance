@@ -315,3 +315,143 @@ def should_decompose(state: RAGState) -> bool:
     logger.info(f"[CLASSIFY] Reason: {result.reason}")
     
     return result.is_complex
+
+
+# ============================================================================
+# FALLBACK NODES (Step 9)
+# ============================================================================
+
+# Cached fallback instances
+_fallback_decider = None
+_google_search = None
+
+
+def _get_fallback_decider():
+    """Lazy load fallback decider."""
+    global _fallback_decider
+    if _fallback_decider is None:
+        from src.core.fallback import FallbackDecider
+        _fallback_decider = FallbackDecider()
+    return _fallback_decider
+
+
+def _get_google_search():
+    """Lazy load Google search grounding."""
+    global _google_search
+    if _google_search is None:
+        from src.core.fallback import GoogleSearchGrounding
+        _google_search = GoogleSearchGrounding()
+    return _google_search
+
+
+def fallback_check_node(state: RAGState) -> RAGState:
+    """
+    Check if fallback to external search is needed.
+    
+    Analyzes retrieval results and decides whether to trigger
+    Google Search grounding for additional context.
+    """
+    _log_separator("STEP 3.5: FALLBACK CHECK")
+    start = time.time()
+    
+    decider = _get_fallback_decider()
+    
+    query = state["query"]
+    contexts = state.get("contexts", [])
+    routes = state.get("routes", [])
+    
+    logger.info(f"[INPUT] Query: {_truncate(query)}")
+    logger.info(f"[INPUT] Retrieved Contexts: {len(contexts)}")
+    logger.info(f"[INPUT] Routes: {routes}")
+    
+    # Make fallback decision
+    decision = decider.decide(query, contexts, routes)
+    
+    state["fallback_decision"] = decision.to_dict()
+    state["step_times"]["fallback_check"] = (time.time() - start) * 1000
+    
+    logger.info(f"[OUTPUT] Should Fallback: {decision.should_fallback}")
+    logger.info(f"[OUTPUT] Reason: {decision.reason.value}")
+    logger.info(f"[OUTPUT] Max Score: {decision.max_similarity_score:.3f}")
+    logger.info(f"[OUTPUT] Doc Count: {decision.doc_count}")
+    if decision.details:
+        logger.info(f"[OUTPUT] Details: {decision.details}")
+    logger.info(f"[TIME] Fallback Check: {state['step_times']['fallback_check']:.2f}ms")
+    
+    return state
+
+
+async def google_search_node(state: RAGState) -> RAGState:
+    """
+    Execute Google Search grounding for external knowledge.
+    
+    Uses Gemini with Google Search tool binding to retrieve
+    real-time information from the web.
+    """
+    _log_separator("STEP 3.6: GOOGLE SEARCH")
+    start = time.time()
+    
+    search = _get_google_search()
+    
+    query = state["query"]
+    sub_queries = state.get("sub_queries", [])
+    
+    logger.info(f"[INPUT] Query: {_truncate(query)}")
+    logger.info(f"[INPUT] Sub-queries: {len(sub_queries)}")
+    
+    # Execute search
+    result = search.search(query, sub_queries)
+    
+    state["web_contexts"] = result.get("web_contexts", [])
+    state["fallback_used"] = result.get("fallback_used", True)
+    state["fallback_error"] = result.get("fallback_error")
+    state["step_times"]["google_search"] = (time.time() - start) * 1000
+    
+    logger.info(f"[OUTPUT] Web Contexts: {len(state['web_contexts'])}")
+    logger.info(f"[OUTPUT] Fallback Used: {state['fallback_used']}")
+    if state["fallback_error"]:
+        logger.warning(f"[OUTPUT] Error: {state['fallback_error']}")
+    
+    # Log web contexts preview
+    for i, ctx in enumerate(state["web_contexts"][:3], 1):
+        logger.info(f"  [{i}] Source: {ctx.get('url', 'N/A')}")
+        logger.info(f"      Content: {_truncate(ctx.get('content', ''), 100)}")
+    
+    logger.info(f"[TIME] Google Search: {state['step_times']['google_search']:.2f}ms")
+    
+    # Merge web contexts into main contexts for generation
+    if state["web_contexts"]:
+        # Add web contexts to main contexts list
+        for web_ctx in state["web_contexts"]:
+            # Mark as web source in metadata
+            web_ctx["metadata"] = web_ctx.get("metadata", {})
+            web_ctx["metadata"]["source_type"] = "web"
+        
+        state["contexts"].extend(state["web_contexts"])
+        
+        # Update formatted_context to include web results
+        web_context_text = "\n\n--- Web Search Results ---\n"
+        for i, ctx in enumerate(state["web_contexts"], 1):
+            url = ctx.get("url", "Web Search")
+            content = ctx.get("content", "")
+            web_context_text += f"\n[Web {i}] ({url}):\n{content}\n"
+        
+        state["formatted_context"] += web_context_text
+        
+        logger.info(f"[OUTPUT] Total Contexts After Merge: {len(state['contexts'])}")
+    
+    return state
+
+
+def should_fallback(state: RAGState) -> bool:
+    """
+    Conditional function to determine if fallback path should be taken.
+    
+    Used by LangGraph for conditional edge routing.
+    """
+    decision = state.get("fallback_decision", {})
+    should_fb = decision.get("should_fallback", False)
+    
+    logger.info(f"[CONDITIONAL] Should Fallback: {should_fb}")
+    return should_fb
+

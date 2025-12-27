@@ -2,6 +2,7 @@
 LangGraph State Definition for RAG Pipeline.
 
 Updated for Canonical Answer Framework (CAF) - Step 8.
+Updated for External Search Fallback - Step 9.
 """
 from typing import TypedDict, List, Optional, Dict, Any
 
@@ -12,6 +13,7 @@ class RAGState(TypedDict):
     
     This state flows through all nodes in the graph.
     Updated to support Canonical Answer Framework (CAF).
+    Updated to support External Search Fallback.
     """
     # Input
     query: str
@@ -36,6 +38,12 @@ class RAGState(TypedDict):
     # NEW: Canonical Facts (CAF Pass 1 output)
     canonical_facts: List[Dict[str, Any]]  # List of CanonicalFact dicts
     
+    # NEW: Fallback (Step 9)
+    fallback_decision: Optional[Dict[str, Any]]  # FallbackDecision as dict
+    web_contexts: List[Dict[str, Any]]           # Results from Google Search
+    fallback_used: bool
+    fallback_error: Optional[str]
+    
     # Generation (CAF Pass 2 output)
     answer: str
     citations: List[Dict[str, Any]]
@@ -59,8 +67,12 @@ def create_initial_state(query: str) -> RAGState:
         contexts=[],
         formatted_context="",
         citations_map=[],
-        sub_query_contexts={},  # NEW for CAF
-        canonical_facts=[],      # NEW for CAF
+        sub_query_contexts={},  # CAF
+        canonical_facts=[],      # CAF
+        fallback_decision=None,  # Fallback
+        web_contexts=[],         # Fallback
+        fallback_used=False,     # Fallback
+        fallback_error=None,     # Fallback
         answer="",
         citations=[],
         is_grounded=False,

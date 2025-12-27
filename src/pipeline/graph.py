@@ -2,10 +2,10 @@
 LangGraph State Graph Definition.
 
 This is the main entry point for the RAG pipeline.
-Full pipeline: Query → Route → Decompose → Retrieve → Generate → Answer
+Full pipeline: Query → Route → Decompose → Retrieve → [Fallback?] → Generate → Answer
 
 Updated for Canonical Answer Framework (CAF) - Step 8.
-CAF uses 2-pass generation: Extract Facts → Synthesize Answer
+Updated for External Search Fallback - Step 9.
 """
 import logging
 import os
@@ -14,7 +14,9 @@ from typing import Dict, Any
 from .state import RAGState, create_initial_state
 from .nodes import (
     route_node, decompose_node, retrieve_node, generate_node,
-    should_decompose
+    should_decompose,
+    # Fallback nodes (Step 9)
+    fallback_check_node, google_search_node, should_fallback
 )
 # CAF nodes
 from .caf_nodes import (
@@ -35,8 +37,11 @@ except ImportError:
 # Feature flag for CAF - can be set via environment variable
 CAF_ENABLED = os.getenv("CAF_ENABLED", "true").lower() in ("true", "1", "yes")
 
+# Feature flag for Fallback - can be set via environment variable
+FALLBACK_ENABLED = os.getenv("FALLBACK_ENABLED", "true").lower() in ("true", "1", "yes")
 
-def build_rag_graph(use_caf: bool = None):
+
+def build_rag_graph(use_caf: bool = None, use_fallback: bool = None):
     """
     Build the RAG pipeline graph.
     
@@ -46,8 +51,13 @@ def build_rag_graph(use_caf: bool = None):
     Flow (CAF):
         START → route → [decompose?] → retrieve → extract_facts → synthesize → END
     
+    Flow (with Fallback):
+        START → route → [decompose?] → retrieve → fallback_check → 
+        [if low confidence] → google_search → generate → END
+    
     Args:
         use_caf: Override CAF_ENABLED setting (default: None uses env var)
+        use_fallback: Override FALLBACK_ENABLED setting (default: None uses env var)
     
     Returns:
         Compiled StateGraph ready for invocation.
@@ -55,23 +65,29 @@ def build_rag_graph(use_caf: bool = None):
     if not LANGGRAPH_AVAILABLE:
         raise ImportError("langgraph not installed")
     
-    # Determine whether to use CAF
+    # Determine feature flags
     enable_caf = use_caf if use_caf is not None else CAF_ENABLED
+    enable_fallback = use_fallback if use_fallback is not None else FALLBACK_ENABLED
     
     # Create graph with state schema
     graph = StateGraph(RAGState)
     
-    # Add nodes
+    # Add core nodes
     graph.add_node("route", route_node)
     graph.add_node("decompose", decompose_node)
     graph.add_node("retrieve", retrieve_node)
     
+    # Add fallback nodes if enabled
+    if enable_fallback:
+        logger.info("Building RAG graph with External Search Fallback")
+        graph.add_node("fallback_check", fallback_check_node)
+        graph.add_node("google_search", google_search_node)
+    
+    # Add generation node (CAF or original)
     if enable_caf:
-        # CAF: 2-pass generation
         logger.info("Building RAG graph with CAF (2-pass generation)")
-        graph.add_node("generate", generate_node_caf)  # Combined CAF node
+        graph.add_node("generate", generate_node_caf)
     else:
-        # Original: 1-pass generation
         logger.info("Building RAG graph with original generation")
         graph.add_node("generate", generate_node)
     
@@ -88,9 +104,31 @@ def build_rag_graph(use_caf: bool = None):
         }
     )
     
-    # Linear edges
+    # Linear edge: decompose → retrieve
     graph.add_edge("decompose", "retrieve")
-    graph.add_edge("retrieve", "generate")
+    
+    # Fallback path or direct to generate
+    if enable_fallback:
+        # retrieve → fallback_check
+        graph.add_edge("retrieve", "fallback_check")
+        
+        # Conditional: fallback_check → google_search OR generate
+        graph.add_conditional_edges(
+            "fallback_check",
+            should_fallback,
+            {
+                True: "google_search",
+                False: "generate"
+            }
+        )
+        
+        # google_search → generate
+        graph.add_edge("google_search", "generate")
+    else:
+        # Direct: retrieve → generate
+        graph.add_edge("retrieve", "generate")
+    
+    # Final edge
     graph.add_edge("generate", END)
     
     # Compile
@@ -191,6 +229,14 @@ async def run_rag_pipeline_async(query: str, use_caf: bool = None) -> Dict[str, 
         response["canonical_facts"] = result["canonical_facts"]
     if "sub_query_contexts" in result and result["sub_query_contexts"]:
         response["sub_query_contexts"] = result["sub_query_contexts"]
+    
+    # Include fallback-specific fields (Step 9)
+    if result.get("fallback_used"):
+        response["fallback_used"] = result["fallback_used"]
+        response["web_contexts"] = result.get("web_contexts", [])
+        response["fallback_decision"] = result.get("fallback_decision")
+        if result.get("fallback_error"):
+            response["fallback_error"] = result["fallback_error"]
     
     return response
 
